@@ -1,0 +1,600 @@
+[gd_scene load_steps=10 format=3 uid="uid://dv2weqgbjob0t"]
+
+[ext_resource type="Script" uid="uid://nfhcgmos3u8p" path="res://scripts/game.gd" id="1_cdfni"]
+[ext_resource type="Script" uid="uid://c3bi06rrusery" path="res://scripts/main.gd" id="1_s0nni"]
+[ext_resource type="Script" uid="uid://c18fsofsu2o7v" path="res://scripts/camera.gd" id="2_qbsmt"]
+[ext_resource type="Script" uid="uid://2jeiqi6v80b3" path="res://scripts/game_ui.gd" id="3_cpr0p"]
+[ext_resource type="Texture2D" uid="uid://tipiuyew8pl7" path="res://icon.svg" id="4_78awf"]
+[ext_resource type="Script" uid="uid://b13yjmmayxmr5" path="res://scripts/sudoku.gd" id="4_kiw3p"]
+[ext_resource type="Script" uid="uid://dr53bksnhf61" path="res://scripts/menu.gd" id="5_aug50"]
+[ext_resource type="Theme" uid="uid://dhhtge5bb42lp" path="res://Resource/Button.tres" id="8_400sg"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cpr0p"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.043039218, 0.043039136, 0.04303915, 0.6)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[node name="Main" type="Node"]
+script = ExtResource("1_s0nni")
+
+[node name="Game" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_cdfni")
+
+[node name="Sudoku" type="Control" parent="Game"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_kiw3p")
+
+[node name="GridContainer" type="GridContainer" parent="Game/Sudoku"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+columns = 9
+
+[node name="Camera" type="Camera2D" parent="Game"]
+position = Vector2(360, 640)
+script = ExtResource("2_qbsmt")
+drag_button = 2
+min_zoom = 0.5
+max_zoom = 1.5
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+
+[node name="LoseScreen" type="Control" parent="CanvasLayer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PanelCentral" type="Panel" parent="CanvasLayer/LoseScreen"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="CanvasLayer/LoseScreen/PanelCentral"]
+custom_minimum_size = Vector2(384, 256)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -192.0
+offset_top = -128.0
+offset_right = 192.0
+offset_bottom = 128.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_cpr0p")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/LoseScreen/PanelCentral/Panel"]
+custom_minimum_size = Vector2(352, 224)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -176.0
+offset_top = -112.0
+offset_right = 176.0
+offset_bottom = 112.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="Label" type="Label" parent="CanvasLayer/LoseScreen/PanelCentral/Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "Fin del juego"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="CanvasLayer/LoseScreen/PanelCentral/Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "Cometiste 3 errores y perdiste el juego"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SegundaOportunidad" type="Button" parent="CanvasLayer/LoseScreen/PanelCentral/Panel/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Segunda oportunidad"
+
+[node name="NuevoJuego" type="Button" parent="CanvasLayer/LoseScreen/PanelCentral/Panel/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Juego nuevo"
+
+[node name="WinScreen" type="Control" parent="CanvasLayer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelCentral" type="Panel" parent="CanvasLayer/WinScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="CanvasLayer/WinScreen/PanelCentral"]
+custom_minimum_size = Vector2(384, 512)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -192.0
+offset_top = -128.0
+offset_right = 192.0
+offset_bottom = 128.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_cpr0p")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/WinScreen/PanelCentral/Panel"]
+custom_minimum_size = Vector2(352, 480)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -176.0
+offset_top = -112.0
+offset_right = 176.0
+offset_bottom = 112.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Label" type="Label" parent="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "Awesome!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label3" type="Label" parent="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Dificulty"
+horizontal_alignment = 1
+
+[node name="Label4" type="Label" parent="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Easy"
+horizontal_alignment = 1
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label2" type="Label" parent="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer/HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "Time: "
+horizontal_alignment = 1
+
+[node name="Label3" type="Label" parent="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer/HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "12:04"
+horizontal_alignment = 1
+
+[node name="NewGame" type="Button" parent="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_vertical = 4
+text = "New Game"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Back" type="Button" parent="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = "Home"
+
+[node name="Share" type="Button" parent="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = "Share"
+
+[node name="GameUI" type="Control" parent="CanvasLayer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_cpr0p")
+
+[node name="PanelInferior" type="Panel" parent="CanvasLayer/GameUI"]
+custom_minimum_size = Vector2(0, 224)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -224.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/GameUI/PanelInferior"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/GameUI/PanelInferior/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="Hint" type="Button" parent="CanvasLayer/GameUI/PanelInferior/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Hint"
+
+[node name="Solve" type="Button" parent="CanvasLayer/GameUI/PanelInferior/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Solve"
+
+[node name="SelectGrid" type="GridContainer" parent="CanvasLayer/GameUI/PanelInferior/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+columns = 10
+
+[node name="PanelSuperior" type="Panel" parent="CanvasLayer/GameUI"]
+custom_minimum_size = Vector2(0, 128)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 128.0
+grow_horizontal = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/GameUI/PanelSuperior"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/GameUI/PanelSuperior/VBoxContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/GameUI/PanelSuperior"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Control" type="Control" parent="CanvasLayer/GameUI/PanelSuperior/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Back" type="Button" parent="CanvasLayer/GameUI/PanelSuperior/HBoxContainer/Control"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 88.0
+offset_bottom = 88.0
+text = "<"
+
+[node name="Control2" type="HBoxContainer" parent="CanvasLayer/GameUI/PanelSuperior/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/GameUI/PanelSuperior/HBoxContainer/Control2"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="Errores" type="Label" parent="CanvasLayer/GameUI/PanelSuperior/HBoxContainer/Control2/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Errores 1/3"
+horizontal_alignment = 1
+
+[node name="TimerLabel" type="Label" parent="CanvasLayer/GameUI/PanelSuperior/HBoxContainer/Control2/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "12:23"
+horizontal_alignment = 1
+
+[node name="Control3" type="Control" parent="CanvasLayer/GameUI/PanelSuperior/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Options" type="Button" parent="CanvasLayer/GameUI/PanelSuperior/HBoxContainer/Control3"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 0
+offset_left = 150.0
+offset_top = 24.0
+offset_right = 214.0
+offset_bottom = 88.0
+text = "O"
+
+[node name="Timer" type="Timer" parent="CanvasLayer/GameUI"]
+autostart = true
+
+[node name="Menu" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("5_aug50")
+
+[node name="Control3" type="Control" parent="CanvasLayer/Menu"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="Options" type="Button" parent="CanvasLayer/Menu/Control3"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -88.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 88.0
+grow_horizontal = 0
+text = "O"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Menu"]
+custom_minimum_size = Vector2(512, 768)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -256.0
+offset_top = -384.0
+offset_right = 256.0
+offset_bottom = 384.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="Icon" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+size_flags_vertical = 3
+texture = ExtResource("4_78awf")
+stretch_mode = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Menu/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="PrevSize" type="Button" parent="CanvasLayer/Menu/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+theme = ExtResource("8_400sg")
+text = "<"
+
+[node name="Size" type="Label" parent="CanvasLayer/Menu/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "3 x 3"
+horizontal_alignment = 1
+
+[node name="NextSize" type="Button" parent="CanvasLayer/Menu/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+theme = ExtResource("8_400sg")
+text = ">"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Menu/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="Easy" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("8_400sg")
+text = "Easy"
+
+[node name="Medium" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("8_400sg")
+text = "Medium"
+
+[node name="Hard" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("8_400sg")
+text = "Hard"
+
+[node name="Continue" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("8_400sg")
+text = "Continue"
+
+[node name="Zones" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("8_400sg")
+toggle_mode = true
+text = "X"
+
+[node name="Control" type="Control" parent="CanvasLayer/Menu"]
+custom_minimum_size = Vector2(512, 99)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -256.0
+offset_top = -263.0
+offset_right = 256.0
+offset_bottom = -164.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Menu/Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="EliminarAnuncios" type="Button" parent="CanvasLayer/Menu/Control/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("8_400sg")
+text = "Eliminar anuncios X"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Menu/Control/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 43
+alignment = 1
+
+[node name="Configuration" type="Button" parent="CanvasLayer/Menu/Control/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_vertical = 5
+theme = ExtResource("8_400sg")
+
+[node name="Store" type="Button" parent="CanvasLayer/Menu/Control/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_vertical = 5
+theme = ExtResource("8_400sg")
+
+[node name="Leaderboard" type="Button" parent="CanvasLayer/Menu/Control/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_vertical = 5
+theme = ExtResource("8_400sg")
+
+[node name="Information" type="Button" parent="CanvasLayer/Menu/Control/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_vertical = 5
+theme = ExtResource("8_400sg")
+
+[connection signal="pressed" from="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer/NewGame" to="CanvasLayer/GameUI" method="_on_nuevo_juego_pressed"]
+[connection signal="pressed" from="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer/HBoxContainer2/Back" to="CanvasLayer/GameUI" method="_on_back_pressed"]
+[connection signal="pressed" from="CanvasLayer/WinScreen/PanelCentral/Panel/VBoxContainer/HBoxContainer2/Share" to="CanvasLayer/GameUI" method="_on_share_pressed"]
+[connection signal="pressed" from="CanvasLayer/GameUI/PanelInferior/VBoxContainer/HBoxContainer/Hint" to="CanvasLayer/GameUI" method="_on_hint_pressed"]
+[connection signal="pressed" from="CanvasLayer/GameUI/PanelInferior/VBoxContainer/HBoxContainer/Solve" to="CanvasLayer/GameUI" method="_on_solve_pressed"]
+[connection signal="pressed" from="CanvasLayer/GameUI/PanelSuperior/HBoxContainer/Control/Back" to="CanvasLayer/GameUI" method="_on_back_pressed"]
+[connection signal="pressed" from="CanvasLayer/GameUI/PanelSuperior/HBoxContainer/Control3/Options" to="CanvasLayer/GameUI" method="_on_options_pressed"]
+[connection signal="timeout" from="CanvasLayer/GameUI/Timer" to="CanvasLayer/GameUI" method="_on_timer_timeout"]
+[connection signal="pressed" from="CanvasLayer/Menu/Control3/Options" to="CanvasLayer/Menu" method="_on_options_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/HBoxContainer/PrevSize" to="CanvasLayer/Menu" method="_on_prev_size_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/HBoxContainer/NextSize" to="CanvasLayer/Menu" method="_on_next_size_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/Easy" to="CanvasLayer/Menu" method="_on_easy_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/Medium" to="CanvasLayer/Menu" method="_on_medium_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/Hard" to="CanvasLayer/Menu" method="_on_hard_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/Continue" to="CanvasLayer/Menu" method="_on_continue_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/Zones" to="CanvasLayer/Menu" method="_on_zones_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/Control/VBoxContainer/EliminarAnuncios" to="CanvasLayer/Menu" method="_on_eliminar_anuncios_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/Control/VBoxContainer/HBoxContainer/Configuration" to="CanvasLayer/Menu" method="_on_configuration_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/Control/VBoxContainer/HBoxContainer/Store" to="CanvasLayer/Menu" method="_on_store_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/Control/VBoxContainer/HBoxContainer/Leaderboard" to="CanvasLayer/Menu" method="_on_leaderboard_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/Control/VBoxContainer/HBoxContainer/Information" to="CanvasLayer/Menu" method="_on_information_pressed"]
