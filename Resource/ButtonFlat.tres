@@ -1,6 +1,6 @@
-[gd_resource type="Theme" load_steps=7 format=3 uid="uid://dhhtge5bb42lp"]
+[gd_resource type="Theme" load_steps=7 format=3 uid="uid://cjms8yxyupmcu"]
 
-[ext_resource type="FontFile" uid="uid://ny1uo4wyolu3" path="res://Font/Inter_18pt-Regular.ttf" id="1_562kg"]
+[ext_resource type="FontFile" uid="uid://ny1uo4wyolu3" path="res://Font/Inter_18pt-Regular.ttf" id="1_j3tqm"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3gcpv"]
 content_margin_left = 4.0
@@ -53,10 +53,6 @@ content_margin_top = 4.0
 content_margin_right = 4.0
 content_margin_bottom = 4.0
 bg_color = Color(0.07058824, 0.07058824, 0.07058824, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
 border_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
 corner_radius_top_left = 16
 corner_radius_top_right = 16
@@ -76,7 +72,7 @@ corner_radius_bottom_left = 3
 corner_detail = 5
 
 [resource]
-default_font = ExtResource("1_562kg")
+default_font = ExtResource("1_j3tqm")
 Button/colors/font_color = Color(0.875, 0.875, 0.875, 1)
 Button/colors/font_disabled_color = Color(0.875, 0.875, 0.875, 0.5)
 Button/colors/font_focus_color = Color(0.95, 0.95, 0.95, 1)
@@ -95,7 +91,7 @@ Button/constants/h_separation = 4
 Button/constants/icon_max_width = 0
 Button/constants/outline_size = 0
 Button/font_sizes/font_size = 24
-Button/fonts/font = ExtResource("1_562kg")
+Button/fonts/font = ExtResource("1_j3tqm")
 Button/styles/disabled = SubResource("StyleBoxFlat_3gcpv")
 Button/styles/focus = SubResource("StyleBoxFlat_c5jyk")
 Button/styles/hover = SubResource("StyleBoxFlat_l0tkf")

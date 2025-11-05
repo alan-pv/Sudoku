@@ -8,9 +8,12 @@ var GRID_SIZE = 4
 var DIFFICULTY = SudokuBoard.TypeDifficulty.EASY
 var ZONES: bool = false
 
-var saved_games = {} # { 4: grid:Dictionary, 9: ... , 16: ... }
+var ui_sounds: UISounds = null
 
-# Paleta de colores que combinan con el negro (minimalista y profesional)
+var historial = {}
+var saved_game = {} # { 4: grid:Dictionary, 9: ... , 16: ... }
+
+# Paleta de colores que combinan con el negro 
 var colores_acentos: Array[Color] = [
 	Color("#007F5F"), # Verde esmeralda oscuro
 	Color("#0A3D62"), # Azul medianoche
@@ -29,3 +32,9 @@ var colores_acentos: Array[Color] = [
 	Color("#9E2A2B"), # Rojo vino moderno
 	Color("#FFD166")  # Amarillo suave (acento cálido y contrastante)
 ]
+
+var leaderboard: Dictionary = { 0: [], 1: [], 2: [] }
+
+# stats: Ditctionary = { "time": int, "dificultad": int (1-3) } 
+func save_stats(stats: Dictionary) -> void:
+	leaderboard[stats["dificultad"]].append(stats)

@@ -17,6 +17,13 @@ const LEVEL_SEARCH := 99
 static var _USE_ZONES: bool = false
 static var _ZONE_MAP: Array = []
 static var _zone_cells_cache = {}
+static var box_size: int = -1
+
+## Bitmask
+static var _ROW_MASK: Array = []
+static var _COL_MASK: Array = []
+static var _ZONE_MASK: Array = []
+static var _ALL_MASK: int = 0
 
 #region Main Board Generation
 
@@ -24,36 +31,25 @@ static func generate_board(n: int = 9, dificultad: TypeDifficulty = TypeDifficul
 	_USE_ZONES = zones
 	_ZONE_MAP = [] # reset
 	_zone_cells_cache = {}
-	
-	if n <= 0:
-		push_error("SudokuBoard.generate_board: n debe ser > 0")
-		return {}
-	var box = int(sqrt(float(n)))
-	if box * box != n:
+	box_size = int(sqrt(float(n)))
+	if box_size * box_size != n:
 		push_error("SudokuBoard.generate_board: n debe ser un cuadrado perfecto (4,9,16,...)")
 		return {}
-
-	# Generar zonas Jigsaw si está habilitado
-	if _USE_ZONES:
-		var zm = _generate_zones(n, n)
-		if zm.is_empty():
-			push_warning("No se pudo generar zonas válidas, continuando sin zonas")
-			_USE_ZONES = false
-		else:
-			_ZONE_MAP = zm
-			_update_zone_cache(n)
+	
+	_ALL_MASK = (1 << n) - 1
+	_ROW_MASK = [] ; _COL_MASK = [] ; _ZONE_MASK = []
+	for i in range(n): _ROW_MASK.append(0); _COL_MASK.append(0); _ZONE_MASK.append(0)
+	
+	_ZONE_MAP = _initialize_standard_regions(n)
+	_update_zone_cache(n)
 	
 	# Generar solución completa
-	var full = []
-	while full.is_empty():
-		full = _generate_full_with_retry(n)
+	var full = _generate_full_with_retry(n)
+	print("Tablero completado. ")
 	
-	if full.is_empty():
-		push_error("No se pudo generar tablero completo")
-		return {}
-
 	# Generar puzzle con la dificultad especificada
 	var puzzle = _generate_puzzle(full, dificultad)
+	print("Puzzle completado. ")
 	return _to_output_dict(puzzle, full)
 #endregion
 
@@ -70,13 +66,9 @@ static func _generate_zones(n: int, regions: int = 9, swap_steps: int = 25) -> A
 	var zone_map = _initialize_standard_regions(n)
 	
 	# 2. Realizar múltiples intercambios para crear patrones irregulares
-	var successful_swaps = 0
 	for step in range(swap_steps):
-		var success = _perform_simple_swap(zone_map, n, region_size)
-		if success:
-			successful_swaps += 1
+		_perform_simple_swap(zone_map, n, region_size)
 	
-	print("Realizados ", successful_swaps, " intercambios de ", swap_steps, " intentados")
 	return zone_map
 
 ## Realiza intercambios simples entre regiones vecinas
@@ -241,7 +233,6 @@ static func _initialize_standard_regions(n: int) -> Array:
 		for j in range(n):
 			zone_map[i].append(-1)
 	
-	var box_size = int(sqrt(n))
 	var zone_id = 0
 	
 	# Crear cajas estándar 3x3 para 9x9, 2x2 para 4x4, etc.
@@ -257,133 +248,30 @@ static func _initialize_standard_regions(n: int) -> Array:
 
 #region Full Board Generation
 
-#region Full Board Generation
-
 ## Genera un tablero completo con reintentos en caso de fallo
-static func _generate_full_with_retry(n: int, max_attempts: int = 30) -> Array:
+static func _generate_full_with_retry(n: int) -> Array:
 	var attempts = 0
-	var zone_attempts = 0
-	var max_zone_attempts = 20
-	var success_stats = {
-		"total_attempts": 0,
-		"zone_regenerations": 0,
-		"quick_rejects": 0,
-		"timeout_failures": 0
-	}
 	
-	print("=== INICIANDO GENERACIÓN DE TABLERO %dx%d ===" % [n, n])
-	print("Usando zonas: %s" % str(_USE_ZONES))
-	
-	while attempts < max_attempts:
-		success_stats["total_attempts"] = attempts + 1
-		
-		# REGENERAR ZONAS CADA INTENTO - Estrategia principal
+	while true:
 		if _USE_ZONES:
-			if zone_attempts >= max_zone_attempts:
-				push_warning("Demasiados intentos de zonas (%d), desactivando zonas" % zone_attempts)
-				_USE_ZONES = false
-				_ZONE_MAP = []
-				_zone_cells_cache = {}
-			else:
-				# Variar swaps para diversidad de zonas
-				var swap_steps = n * 6 + randi() % (n * 10)
-				_ZONE_MAP = _generate_zones(n, n, swap_steps)
-				if _ZONE_MAP.is_empty():
-					print("❌ Falló generación de zonas, desactivando...")
-					_USE_ZONES = false
-				else:
-					# Precalcular cache
-					_update_zone_cache(n)
-					
-					# VERIFICACIÓN RÁPIDA CRÍTICA
-					if _quick_zone_viability_check(n) == false:
-						success_stats["quick_rejects"] += 1
-						# Continuar inmediatamente con nuevas zonas
-						continue
-					
-				zone_attempts += 1
-				success_stats["zone_regenerations"] = zone_attempts
+			var swap_steps = n * 6 + randi() % (n * 10)
+			_ZONE_MAP = _generate_zones(n, n, swap_steps)
+			_update_zone_cache(n)
 		
-		print("Intento %d/%d: Generando tablero..." % [attempts + 1, max_attempts])
-		var start_time = Time.get_ticks_msec()
+		print("Intento %d: Generando tablero..." % [attempts + 1])
 		
-		# TIMEOUT AGRESIVO: 3 segundos máximo
-		var full = _generate_full_with_timeout(n, 100)
-		var end_time = Time.get_ticks_msec()
-		var duration = end_time - start_time
+		# TIMEOUT 
+		var end_time = 25 * n * n
+		var full = _generate_full(n, end_time)
 		
 		if not full.is_empty():
-			print("✅ ¡TABLERO GENERADO EXITOSAMENTE!")
-			print("   - Intentos totales: %d" % (attempts + 1))
-			print("   - Regeneraciones de zona: %d" % zone_attempts)
-			print("   - Rechazos rápidos: %d" % success_stats["quick_rejects"])
-			print("   - Timeouts: %d" % success_stats["timeout_failures"])
-			print("   - Tiempo del último intento: %d ms" % duration)
-			print("   - Tamaño del tablero: %dx%d" % [n, n])
-			print("=== GENERACIÓN COMPLETADA ===")
 			return full
-		else:
-			if duration >= 3000:
-				success_stats["timeout_failures"] += 1
-				print("❌ Intento %d fallado - TIMEOUT (%d ms)" % [attempts + 1, duration])
-				# Timeout: zonas probablemente imposibles
-				if _USE_ZONES:
-					_ZONE_MAP = []  # Forzar nuevas zonas
-			else:
-				print("❌ Intento %d fallado (%d ms)" % [attempts + 1, duration])
-				# Fallo rápido: zonas definitivamente imposibles  
-				if _USE_ZONES:
-					_ZONE_MAP = []
 		
 		attempts += 1
-	
-	print("💥 ERROR: No se pudo generar tablero completo después de %d intentos" % max_attempts)
-	print("   - Regeneraciones de zona: %d" % zone_attempts)
-	print("   - Rechazos rápidos: %d" % success_stats["quick_rejects"])
-	print("   - Fallos por timeout: %d" % success_stats["timeout_failures"])
-	print("=== GENERACIÓN FALLIDA ===")
 	return []
 
-## Verificación rápida de viabilidad de zonas - VERSIÓN MEJORADA
-static func _quick_zone_viability_check(n: int) -> bool:
-	var zone_stats = {}
-	
-	for zone_id in _zone_cells_cache:
-		var cells = _zone_cells_cache[zone_id]
-		zone_stats[zone_id] = {
-			"size": cells.size(),
-			"rows": {},
-			"cols": {}
-		}
-		
-		# Contar distribución por filas y columnas
-		for cell in cells:
-			zone_stats[zone_id]["rows"][cell.y] = true
-			zone_stats[zone_id]["cols"][cell.x] = true
-	
-	# Análisis de viabilidad rápida - MÁS PERMISIVO PERO EFECTIVO
-	for zone_id in zone_stats:
-		var stats = zone_stats[zone_id]
-		var row_count = stats["rows"].size()
-		var col_count = stats["cols"].size()
-		
-		# CRITERIO PRINCIPAL: Evitar zonas en una sola fila o columna
-		if row_count <= 1 or col_count <= 1:
-			print("    Zona %d rechazada: muy concentrada (%d filas, %d columnas)" % [zone_id, row_count, col_count])
-			return false
-		
-		# CRITERIO SECUNDARIO: Formas extremadamente desbalanceadas
-		var row_ratio = float(stats["size"]) / row_count
-		var col_ratio = float(stats["size"]) / col_count
-		
-		if row_ratio > 4.0 or col_ratio > 4.0:
-			print("    Zona %d rechazada: forma extrema (size: %d, filas: %d, columnas: %d)" % [zone_id, stats["size"], row_count, col_count])
-			return false
-	
-	return true
-
-## Generación con timeout de 3 segundos
-static func _generate_full_with_timeout(n: int, max_time_ms: int) -> Array:
+## Generación de solución
+static func _generate_full(n: int, end_time: int) -> Array:
 	var board: Array = []
 	for i in range(n):
 		board.append([])
@@ -392,73 +280,55 @@ static func _generate_full_with_timeout(n: int, max_time_ms: int) -> Array:
 	
 	var start_time = Time.get_ticks_msec()
 	var empty_cells = _compute_all_empty_cells(board)
-	var success = _fill_board_mrv_timeout(board, empty_cells, 0, start_time, max_time_ms)
+	var success = _fill_board_masks(board, empty_cells, 0, start_time, end_time)
 	
 	if success and _validate_complete_board(board):
 		return board
 	return []
 
 ## Backtracking con timeout estricto de 3 segundos
-static func _fill_board_mrv_timeout(board: Array, empty_cells: Array, depth: int, start_time: int, max_time: int) -> bool:
-	# Verificar timeout MUY frecuentemente
-	if Time.get_ticks_msec() - start_time > max_time:
-		return false
-	
+static func _fill_board_masks(board: Array, empty_cells: Array, depth: int, start_time: int, end_time: int) -> bool:
 	if empty_cells.is_empty():
 		return true
-	
-	# Límite de profundidad conservador
-	if depth > board.size() * board.size() * 1.5:
+
+	if Time.get_ticks_msec() - start_time > end_time:
 		return false
-	
-	var best_cell = null
-	var best_candidates = []
-	var min_candidates = board.size() + 1
-	
-	# MRV RÁPIDO - verificar máximo 10 celdas
-	var cells_to_check = empty_cells
-	if empty_cells.size() > 10:
-		cells_to_check = []
-		for i in range(min(10, empty_cells.size())):
-			cells_to_check.append(empty_cells[i])
-	
-	for cell in cells_to_check:
-		# Verificar timeout en cada celda
-		if Time.get_ticks_msec() - start_time > max_time:
+
+	# MRV: buscar celda con menor popcount de candidatos
+	var best_idx = -1
+	var best_mask = 0
+	var best_count = 999
+	for i in range(empty_cells.size()):
+		var cell = empty_cells[i]
+		var mask = _candidates_mask_for_cell(cell.y, cell.x)
+		var cnt = _bit_count(mask)
+		if cnt == 0:
 			return false
-			
-		var candidates = _candidates_for_cell_fast(board, cell.y, cell.x)
-		if candidates.size() == 0:
-			return false
-		
-		if candidates.size() < min_candidates:
-			min_candidates = candidates.size()
-			best_cell = cell
-			best_candidates = candidates
-			if min_candidates == 1:
+		if cnt < best_count:
+			best_count = cnt
+			best_mask = mask
+			best_idx = i
+			if cnt == 1:
 				break
-	
-	if best_cell == null:
+
+	if best_idx == -1:
 		return false
-	
-	# Probar candidatos en orden aleatorio CON LÍMITE
-	best_candidates.shuffle()
-	var new_empty_cells = empty_cells.duplicate()
-	new_empty_cells.erase(best_cell)
-	
-	# Límite AGRESIVO de candidatos a probar
-	var max_candidates_to_try = min(2, best_candidates.size()) if depth > 5 else min(4, best_candidates.size())
-	
-	for i in range(max_candidates_to_try):
-		if Time.get_ticks_msec() - start_time > max_time:
-			return false
-			
-		var num = best_candidates[i]
-		board[best_cell.y][best_cell.x] = num
-		if _fill_board_mrv_timeout(board, new_empty_cells, depth + 1, start_time, max_time):
+
+	# sacar cell
+	var chosen_cell = empty_cells[best_idx]
+	var new_empty = empty_cells.duplicate()
+	new_empty.remove_at(best_idx)
+
+	# ordenar por least-constraining (heurística simple): probar valores en orden de mayor flexibilidad
+	var candidates_list = _bits_to_list(best_mask)
+	candidates_list.shuffle()
+
+	for val in candidates_list:
+		_assign_value(board, chosen_cell.y, chosen_cell.x, val)
+		if _fill_board_masks(board, new_empty, depth + 1, start_time, end_time):
 			return true
-		board[best_cell.y][best_cell.x] = 0
-	
+		_unassign_value(board, chosen_cell.y, chosen_cell.x, val)
+
 	return false
 
 ## Actualiza la cache de celdas por zona para mejor rendimiento
@@ -506,25 +376,13 @@ static func _validate_complete_board(board: Array) -> bool:
 				return false
 			col_set.append(board[j][i])
 	
-	# Verificar zonas o cajas
-	if not _USE_ZONES:
-		var box_size = int(sqrt(n))
-		for brow in range(0, n, box_size):
-			for bcol in range(0, n, box_size):
-				var box_set = []
-				for r in range(brow, brow + box_size):
-					for c in range(bcol, bcol + box_size):
-						if board[r][c] in box_set:
-							return false
-						box_set.append(board[r][c])
-	else:
-		# Verificar zonas Jigsaw
-		for zone_id in _zone_cells_cache:
-			var zone_set = []
-			for cell in _zone_cells_cache[zone_id]:
-				if board[cell.y][cell.x] in zone_set:
-					return false
-				zone_set.append(board[cell.y][cell.x])
+	# Verificar zonas Jigsaw
+	for zone_id in _zone_cells_cache:
+		var zone_set = []
+		for cell in _zone_cells_cache[zone_id]:
+			if board[cell.y][cell.x] in zone_set:
+				return false
+			zone_set.append(board[cell.y][cell.x])
 	
 	return true
 
@@ -542,22 +400,13 @@ static func _candidates_for_cell_fast(board: Array, row: int, col: int) -> Array
 		if board[i][col] != 0:
 			used[board[i][col]] = true
 	
-	# Verificar zona
-	if _USE_ZONES and _ZONE_MAP.size() == n:
-		var zid = _ZONE_MAP[row][col]
-		if _zone_cells_cache.has(zid):
-			for cell in _zone_cells_cache[zid]:
-				if board[cell.y][cell.x] != 0:
-					used[board[cell.y][cell.x]] = true
-	else:
-		# Cajas regulares
-		var box_size = int(sqrt(n))
-		var box_row = row - (row % box_size)
-		var box_col = col - (col % box_size)
-		for r in range(box_row, box_row + box_size):
-			for c in range(box_col, box_col + box_size):
-				if board[r][c] != 0:
-					used[board[r][c]] = true
+	# Cajas regulares
+	var box_row = row - (row % box_size)
+	var box_col = col - (col % box_size)
+	for r in range(box_row, box_row + box_size):
+		for c in range(box_col, box_col + box_size):
+			if board[r][c] != 0:
+				used[board[r][c]] = true
 	
 	var candidates = []
 	for val in range(1, n + 1):
@@ -568,7 +417,7 @@ static func _candidates_for_cell_fast(board: Array, row: int, col: int) -> Array
 #endregion
 
 #region Puzzle Generation
-## Genera un puzzle removiendo celdas del tablero completo según la dificultad
+## Genera un puzzle removiendo celdas del tablero completo según la dificultad - OPTIMIZADO
 static func _generate_puzzle(full: Array, dificultad: TypeDifficulty) -> Array:
 	var n = full.size()
 	var puzzle = full.duplicate(true)
@@ -576,46 +425,61 @@ static func _generate_puzzle(full: Array, dificultad: TypeDifficulty) -> Array:
 	# Determinar cuántas celdas mantener según la dificultad
 	var target_filled = _difficulty_to_filled_count(n, dificultad)
 	var allowed_level = _dificulty_to_allowed_level(dificultad)
-
+	
 	# Lista de todas las celdas en orden aleatorio
 	var cells: Array = []
 	for r in range(n):
 		for c in range(n):
 			cells.append(Vector2i(c, r))
 	cells.shuffle()
-
-	# Intentar remover celdas manteniendo unicidad y nivel de dificultad humano
+	
+	# Fase 1: Remoción rápida sin verificación humana (solo unicidad)
+	var fast_removal_count = int(target_filled * 0.8)  # Remover el 80% rápidamente
+	var removed_count = 0
+	
+	while removed_count < fast_removal_count and cells.size() > 0:
+		var cell: Vector2i = cells.pop_back()
+		var saved = puzzle[cell.y][cell.x]
+		puzzle[cell.y][cell.x] = 0
+		
+		# Verificación rápida de unicidad
+		var count = _count_solutions(puzzle, 2)
+		if count != 1:
+			puzzle[cell.y][cell.x] = saved
+		else:
+			removed_count += 1
+	
+	# Fase 2: Remoción con verificación completa
 	while puzzle_filled_count(puzzle) > target_filled and cells.size() > 0:
 		var cell: Vector2i = cells.pop_back()
 		var saved = puzzle[cell.y][cell.x]
 		puzzle[cell.y][cell.x] = 0
-
+		
 		# Verificar que solo tenga una solución
 		var count = _count_solutions(puzzle, 2)
 		if count != 1:
 			puzzle[cell.y][cell.x] = saved
 			continue
-
-		# Verificar que sea resoluble con técnicas humanas del nivel permitido
-		var puzzle_copy = puzzle.duplicate(true)
-		var solved_bool = _human_solve(puzzle_copy)[0]
-		var max_level_used = _human_solve(puzzle_copy)[1]
-		if not solved_bool or max_level_used > allowed_level:
+		
+		# Verificar que sea resoluble con técnicas humanas
+		var human_solvable = _human_solve(puzzle, allowed_level)
+		if not human_solvable:
 			puzzle[cell.y][cell.x] = saved
 	
 	return puzzle
 
-## Calcula cuántas celdas deben permanecer según la dificultad
+## Ajustar porcentajes para mejor equilibrio dificultad/velocidad
 static func _difficulty_to_filled_count(n: int, dificultad: TypeDifficulty) -> int:
 	var total = n * n
-	var fill_percent: float = 0.40
+	var fill_percent: float = 0.45  # Más conservador
+	
 	match dificultad:
 		TypeDifficulty.EASY:
-			fill_percent = 0.50
+			fill_percent = 0.5 
 		TypeDifficulty.MEDIUM:
-			fill_percent = 0.40
+			fill_percent = 0.35 
 		TypeDifficulty.HARD:
-			fill_percent = 0.30
+			fill_percent = 0.15  
 	return int(round(total * fill_percent))
 
 ## Define el nivel máximo de técnica humana permitida para cada dificultad
@@ -640,87 +504,158 @@ static func puzzle_filled_count(puzzle: Array) -> int:
 #endregion
 
 #region Solution Counting
-## Cuenta el número de soluciones hasta un límite usando MRV
-static func _count_solutions(board: Array, limit: int) -> int:
-	return _count_solutions_rec(board, limit)
 
-static func _count_solutions_rec(board: Array, limit: int) -> int:
+## Versión optimizada de count_solutions que usa el sistema de máscaras
+static func _count_solutions(board: Array, limit: int) -> int:
 	var n = board.size()
 	
-	# Encontrar la celda con menos candidatos (MRV)
+	# Usar el sistema de máscaras para mayor velocidad
+	_reset_masks(board)
+	
+	return _count_solutions_masks(board, limit, 0)
+
+static func _count_solutions_masks(board: Array, limit: int, depth: int) -> int:
+	if depth > 1000:  # Límite de profundidad para evitar stack overflow
+		return 0
+		
+	var n = board.size()
+	
+	# Buscar celda con menos candidatos usando máscaras (MRV)
 	var best_r = -1
 	var best_c = -1
-	var best_candidates: Array = []
+	var best_mask = 0
+	var best_count = n + 1
+	
 	for r in range(n):
 		for c in range(n):
 			if board[r][c] == 0:
-				var cand = _candidates_for_cell(board, r, c)
-				if best_r == -1 or cand.size() < best_candidates.size():
+				var mask = _candidates_mask_for_cell(r, c)
+				var count = _bit_count(mask)
+				if count == 0:
+					return 0  # Sin solución
+				if count < best_count:
+					best_count = count
+					best_mask = mask
 					best_r = r
 					best_c = c
-					best_candidates = cand
+					if count == 1:  # Optimización: naked single
+						break
+		if best_count == 1:
+			break
 	
-	# Si no hay celdas vacías, encontramos una solución
 	if best_r == -1:
-		return 1
+		return 1  # Tablero completo
 	
-	# Probar cada candidato y contar soluciones
+	# Probar candidatos
 	var solutions = 0
-	for val in best_candidates:
+	var candidates = _bits_to_list(best_mask)
+	
+	for val in candidates:
+		# Asignar valor
 		board[best_r][best_c] = val
-		var found = _count_solutions_rec(board, limit - solutions)
-		solutions += found
+		_assign_value(board, best_r, best_c, val)
+		
+		# Llamada recursiva
+		solutions += _count_solutions_masks(board, limit - solutions, depth + 1)
+		
+		# Deshacer
+		_unassign_value(board, best_r, best_c, val)
 		board[best_r][best_c] = 0
+		
 		if solutions >= limit:
 			break
 	
 	return solutions
 
-## Encuentra todos los valores posibles para una celda
-static func _candidates_for_cell(board: Array, row: int, col: int) -> Array:
+## Versión optimizada de candidatos para counting
+static func _candidates_for_cell_during_counting(board: Array, row: int, col: int) -> Array:
 	var n = board.size()
+	var used_mask = 0
+	
+	# Verificar fila
+	for c in range(n):
+		if board[row][c] != 0:
+			used_mask |= (1 << (board[row][c] - 1))
+	
+	# Verificar columna
+	for r in range(n):
+		if board[r][col] != 0:
+			used_mask |= (1 << (board[r][col] - 1))
+	
+	# Verificar zona
+	var zone_id = _ZONE_MAP[row][col]
+	for cell in _zone_cells_cache[zone_id]:
+		if board[cell.y][cell.x] != 0:
+			used_mask |= (1 << (board[cell.y][cell.x] - 1))
+	
+	# Convertir máscara a lista
+	var candidates = []
+	var all_mask = (1 << n) - 1
+	var available_mask = all_mask & ~used_mask
+	
+	while available_mask != 0:
+		var lb = available_mask & -available_mask
+		var idx = _lowest_bit_index(lb)
+		candidates.append(idx + 1)
+		available_mask &= available_mask - 1
+	
+	return candidates
+#endregion
+
+#region Bitmask
+
+static func _bit_count(x: int) -> int:
+	# popcount — sigue siendo válido y rápido
+	var c = 0
+	while x != 0:
+		x &= x - 1
+		c += 1
+	return c
+
+static func _lowest_bit_index(x: int) -> int:
+	# retorna índice 0..n-1 del bit menos significativo; -1 si x == 0
+	if x == 0:
+		return -1
+	var idx = 0
+	var t = x
+	# desplazar hasta que el LSB sea 1
+	while (t & 1) == 0:
+		t = t >> 1
+		idx += 1
+	return idx
+
+static func _bits_to_list(x: int) -> Array:
+	# convierte máscara de bits a lista de valores [1..n]
 	var out: Array = []
-	for v in range(1, n + 1):
-		if _is_safe_fast(board, row, col, v):
-			out.append(v)
+	while x != 0:
+		# obtener bit menos significativo
+		var lb = x & -x
+		var idx = _lowest_bit_index(lb)
+		# idx es 0-based, los valores de sudoku son idx+1
+		out.append(idx + 1)
+		# remover ese bit
+		x &= x - 1
 	return out
-	
-## Verificación de seguridad ultra optimizada
-static func _is_safe_fast(board: Array, row: int, col: int, val: int) -> bool:
-	var n = board.size()
-	
-	# Verificar fila y columna rápidamente
-	for i in range(n):
-		if board[row][i] == val or board[i][col] == val:
-			return false
-	
-	# Verificar zona o caja
-	if not _USE_ZONES:
-		# Cajas regulares - más rápido
-		var box_size = int(sqrt(n))
-		var box_row = row - (row % box_size)
-		var box_col = col - (col % box_size)
-		
-		for r in range(box_row, box_row + box_size):
-			for c in range(box_col, box_col + box_size):
-				if board[r][c] == val:
-					return false
-	else:
-		# Zonas Jigsaw - usar cache precalculado
-		if _ZONE_MAP.size() == n:
-			var zid = _ZONE_MAP[row][col]
-			if _zone_cells_cache.has(zid):
-				for cell in _zone_cells_cache[zid]:
-					if board[cell.y][cell.x] == val:
-						return false
-			else:
-				# Fallback: calcular en el momento (más lento)
-				for r in range(n):
-					for c in range(n):
-						if _ZONE_MAP[r][c] == zid and board[r][c] == val:
-							return false
-	
-	return true
+
+# --- función que devuelve máscara de candidatos para (r,c) ---
+static func _candidates_mask_for_cell(r: int, c: int) -> int:
+	return _ALL_MASK & ~(_ROW_MASK[r] | _COL_MASK[c] | _ZONE_MASK[_ZONE_MAP[r][c]])
+
+static func _assign_value(board: Array, r: int, c: int, val: int) -> void:
+	board[r][c] = val
+	var mask = 1 << (val - 1)
+	_ROW_MASK[r] |= mask
+	_COL_MASK[c] |= mask
+	_ZONE_MASK[_ZONE_MAP[r][c]] |= mask
+
+
+static func _unassign_value(board: Array, r: int, c: int, val: int) -> void:
+	board[r][c] = 0
+	var mask = ~(1 << (val - 1))
+	_ROW_MASK[r] &= mask
+	_COL_MASK[c] &= mask
+	_ZONE_MASK[_ZONE_MAP[r][c]] &= mask
+
 #endregion
 
 #region Output Format
@@ -730,50 +665,59 @@ static func _to_output_dict(puzzle: Array, full: Array) -> Dictionary:
 	var out: Dictionary = {}
 	for y in range(n):
 		for x in range(n):
-			var key = Vector2i(x, y)
-			var entry = {"value": puzzle[y][x], "solution": full[y][x], "zone": -1}
-			# Agregar información de zona si está habilitado
-			print(_USE_ZONES, " ", _ZONE_MAP.size() == n, " because: ", _ZONE_MAP.size(), " != ", n)
-			if _USE_ZONES and _ZONE_MAP.size() == n:
-				entry["zone"] = int(_ZONE_MAP[y][x])
-				
-			out[key] = entry
+			out[Vector2i(x, y)] = {"value": puzzle[y][x], "solution": full[y][x], "zone": _ZONE_MAP[y][x]}
 			
 	return out
 #endregion
 
 #region Human Solver
-## Intenta resolver el puzzle usando técnicas humanas y devuelve el nivel máximo usado
-static func _human_solve(board: Array) -> Array:
-	var max_level = LEVEL_NONE
+## Verificación rápida de resolubilidad humana
+static func _human_solve(board: Array, allowed_level: int) -> bool:
+	var n = board.size()
+	var board_copy = board.duplicate(true)
+	
+	# Aplicar singles hasta 3 veces antes de verificar técnicas más avanzadas
+	for i in range(n):
+		if not _apply_singles(board_copy):
+			break
+		if _is_filled(board_copy):
+			return true
+	
+	# Si el nivel permitido es solo singles, verificar si está resuelto
+	if allowed_level == LEVEL_SINGLES:
+		return _is_filled(board_copy)
+	
+	# Para niveles superiores, aplicar técnicas permitidas
 	var changed = true
+	var iterations = 0
 	
-	while changed:
+	while changed and iterations < 50:  # Límite de iteraciones
 		changed = false
+		iterations += 1
 		
-		# Aplicar técnicas en orden de dificultad
-		var applied_singles = _apply_singles(board)
-		if applied_singles:
+		if _apply_singles(board_copy):
 			changed = true
-			max_level = max(max_level, LEVEL_SINGLES)
+			if _is_filled(board_copy):
+				return true
 			continue
 		
-		var applied_pairs = _apply_naked_subsets_and_pointing(board)
-		if applied_pairs:
-			changed = true
-			max_level = max(max_level, LEVEL_PAIRS)
-			continue
+		if allowed_level >= LEVEL_PAIRS:
+			print("level_pairs")
+			if _apply_naked_subsets_and_pointing(board_copy):
+				changed = true
+				if _is_filled(board_copy):
+					return true
+				continue
 		
-		var applied_xwing = _apply_xwing(board)
-		if applied_xwing:
-			changed = true
-			max_level = max(max_level, LEVEL_XWING)
-			continue
+		if allowed_level >= LEVEL_XWING:
+			print("level_xwing")
+			if _apply_xwing(board_copy):
+				changed = true
+				if _is_filled(board_copy):
+					return true
+				continue
 	
-	# Devolver si se resolvió y el nivel máximo usado
-	if _is_filled(board):
-		return [true, max_level]
-	return [false, LEVEL_SEARCH]
+	return _is_filled(board_copy)
 
 ## Verifica si el tablero está completamente lleno
 static func _is_filled(board: Array) -> bool:
@@ -785,272 +729,268 @@ static func _is_filled(board: Array) -> bool:
 #endregion
 
 #region Solving Techniques
-## Aplica técnicas de singles (naked y hidden)
 static func _apply_singles(board: Array) -> bool:
 	var n = board.size()
-	var candidates = _compute_all_candidates(board)
-	var applied := false
-
+	
+	# Reiniciar máscaras
+	_reset_masks(board)
+	
 	# Naked singles
 	for r in range(n):
 		for c in range(n):
-			if board[r][c] == 0 and candidates[r][c].size() == 1:
-				board[r][c] = candidates[r][c][0]
-				applied = true
+			if board[r][c] == 0:
+				var mask = _candidates_mask_for_cell(r, c)
+				var count = _bit_count(mask)
+				if count == 1:
+					var val = _lowest_bit_index(mask) + 1
+					board[r][c] = val
+					_assign_value(board, r, c, val)
+					return true
 	
-	if applied:
-		return true
-
-	# Hidden singles en filas, columnas y cajas
-	var box_size = int(sqrt(float(n)))
-	
-	# Filas
+	# Hidden singles
 	for r in range(n):
-		var counts = {}
 		for c in range(n):
-			if board[r][c] == 0:
-				for val in candidates[r][c]:
-					if not counts.has(val):
-						counts[val] = []
-					counts[val].append(Vector2i(r, c))
-		for val in counts.keys():
-			if counts[val].size() == 1:
-				var pos = counts[val][0]
-				board[pos.x][pos.y] = val
-				return true
-	
-	# Columnas
-	for c in range(n):
-		var counts_c = {}
-		for r in range(n):
-			if board[r][c] == 0:
-				for val in candidates[r][c]:
-					if not counts_c.has(val):
-						counts_c[val] = []
-					counts_c[val].append(Vector2i(r, c))
-		for val in counts_c.keys():
-			if counts_c[val].size() == 1:
-				var pos = counts_c[val][0]
-				board[pos.x][pos.y] = val
-				return true
-	
-	# Cajas
-	for brow in range(0, n, box_size):
-		for bcol in range(0, n, box_size):
-			var counts_b = {}
-			for r in range(brow, brow + box_size):
-				for c in range(bcol, bcol + box_size):
-					if board[r][c] == 0:
-						for val in candidates[r][c]:
-							if not counts_b.has(val):
-								counts_b[val] = []
-							counts_b[val].append(Vector2i(r, c))
-			for val in counts_b.keys():
-				if counts_b[val].size() == 1:
-					var pos = counts_b[val][0]
-					board[pos.x][pos.y] = val
+			if board[r][c] != 0:
+				continue
+				
+			var original_mask = _candidates_mask_for_cell(r, c)
+			var temp_mask = original_mask
+			
+			while temp_mask != 0:
+				var val_mask = temp_mask & -temp_mask
+				var val = _lowest_bit_index(val_mask) + 1
+				temp_mask &= temp_mask - 1
+				
+				# Verificar fila
+				var unique_in_row = true
+				for other_c in range(n):
+					if other_c != c and board[r][other_c] == 0:
+						var other_mask = _candidates_mask_for_cell(r, other_c)
+						if other_mask & val_mask:
+							unique_in_row = false
+							break
+				if unique_in_row:
+					board[r][c] = val
+					_assign_value(board, r, c, val)
+					return true
+				
+				# Verificar columna
+				var unique_in_col = true
+				for other_r in range(n):
+					if other_r != r and board[other_r][c] == 0:
+						var other_mask = _candidates_mask_for_cell(other_r, c)
+						if other_mask & val_mask:
+							unique_in_col = false
+							break
+				if unique_in_col:
+					board[r][c] = val
+					_assign_value(board, r, c, val)
+					return true
+				
+				# Verificar zona
+				var unique_in_zone = true
+				var zone_id = _ZONE_MAP[r][c]
+				for zone_cell in _zone_cells_cache[zone_id]:
+					if zone_cell.x == c and zone_cell.y == r:
+						continue
+					if board[zone_cell.y][zone_cell.x] == 0:
+						var other_mask = _candidates_mask_for_cell(zone_cell.y, zone_cell.x)
+						if other_mask & val_mask:
+							unique_in_zone = false
+							break
+				if unique_in_zone:
+					board[r][c] = val
+					_assign_value(board, r, c, val)
 					return true
 	
 	return false
 
-## Calcula todos los candidatos posibles para cada celda vacía
-static func _compute_all_candidates(board: Array) -> Array:
+static func _reset_masks(board: Array):
+	var n = board.size()
+	for i in range(n):
+		_ROW_MASK[i] = 0
+		_COL_MASK[i] = 0
+		_ZONE_MASK[i] = 0
+	
+	for r in range(n):
+		for c in range(n):
+			if board[r][c] != 0:
+				_assign_value(board, r, c, board[r][c])
+
+## Versión optimizada para calcular todos los candidatos
+static func _compute_all_candidates_fast(board: Array) -> Array:
 	var n = board.size()
 	var candidates = []
 	for r in range(n):
 		candidates.append([])
 		for c in range(n):
 			if board[r][c] == 0:
-				candidates[r].append(_candidates_for_cell(board, r, c))
+				candidates[r].append(_candidates_for_cell_fast(board, r, c))
 			else:
 				candidates[r].append([])
 	return candidates
 
-## Aplica técnicas de naked subsets y pointing pairs/triples
 static func _apply_naked_subsets_and_pointing(board: Array) -> bool:
+	# Versión conservadora - solo buscar naked pairs muy obvios
 	var n = board.size()
-	var candidates = _compute_all_candidates(board)
 	var changed = false
-
-	# Naked subsets para pares y triples
-	for size_subset in [2, 3]:
-		changed = changed or _apply_naked_subsets_to_unit(candidates, n, size_subset)
 	
-	# Pointing pairs
-	changed = changed or _apply_pointing_pairs(candidates, n)
+	# Reiniciar máscaras para tener estado consistente
+	_reset_masks(board)
 	
-	# Aplicar naked singles resultantes
-	if changed:
-		for r in range(n):
-			for c in range(n):
-				if board[r][c] == 0 and candidates[r][c].size() == 1:
-					board[r][c] = candidates[r][c][0]
-		return true
-	
-	return false
-
-## Aplica naked subsets a una unidad (fila, columna o caja)
-static func _apply_naked_subsets_to_unit(candidates: Array, n: int, subset_size: int) -> bool:
-	var changed = false
-	var box_size = int(sqrt(float(n)))
-	
-	# Filas
+	# Solo buscar naked pairs que lleven directamente a naked singles
 	for r in range(n):
-		changed = changed or _apply_naked_subsets_to_group(candidates, n, subset_size, "row", r)
-	
-	# Columnas
-	for c in range(n):
-		changed = changed or _apply_naked_subsets_to_group(candidates, n, subset_size, "col", c)
-	
-	# Cajas
-	for brow in range(0, n, box_size):
-		for bcol in range(0, n, box_size):
-			changed = changed or _apply_naked_subsets_to_group(candidates, n, subset_size, "box", brow, bcol)
+		for c in range(n):
+			if board[r][c] == 0:
+				var mask = _candidates_mask_for_cell(r, c)
+				if _bit_count(mask) == 2:
+					# Buscar en fila
+					for other_c in range(n):
+						if other_c != c and board[r][other_c] == 0:
+							var other_mask = _candidates_mask_for_cell(r, other_c)
+							if mask == other_mask:
+								# Este es un naked pair válido
+								# Intentar aplicar cambios limitados
+								var applied_change = _apply_naked_pair_elimination(board, r, c, other_c, true)
+								changed = changed or applied_change
+					
+					# Buscar en columna
+					for other_r in range(n):
+						if other_r != r and board[other_r][c] == 0:
+							var other_mask = _candidates_mask_for_cell(other_r, c)
+							if mask == other_mask:
+								var applied_change = _apply_naked_pair_elimination(board, r, c, other_r, false)
+								changed = changed or applied_change
 	
 	return changed
 
-## Aplica naked subsets a un grupo específico (fila, columna o caja)
-static func _apply_naked_subsets_to_group(candidates: Array, n: int, subset_size: int, type: String, param1: int, param2: int = 0) -> bool:
+static func _apply_naked_pair_elimination(board: Array, idx1: int, idx2: int, idx3: int, is_row: bool) -> bool:
 	var changed = false
-	var positions = []
+	var n = board.size()
 	
-	# Obtener posiciones del grupo
-	match type:
-		"row":
-			for c in range(n):
-				if candidates[param1][c].size() > 0:
-					positions.append(Vector2i(param1, c))
-		"col":
-			for r in range(n):
-				if candidates[r][param1].size() > 0:
-					positions.append(Vector2i(r, param1))
-		"box":
-			var box_size = int(sqrt(float(n)))
-			for r in range(param1, param1 + box_size):
-				for c in range(param2, param2 + box_size):
-					if candidates[r][c].size() > 0:
-						positions.append(Vector2i(r, c))
-	
-	# Buscar subsets
-	if positions.size() >= subset_size:
-		# Implementación simplificada - buscar celdas con exactamente subset_size candidatos que sean iguales
-		var combos = {}
-		for pos in positions:
-			var key = _sorted_list_to_key(candidates[pos.x][pos.y])
-			if not combos.has(key):
-				combos[key] = []
-			combos[key].append(pos)
+	if is_row:
+		var r = idx1
+		var c1 = idx2
+		var c2 = idx3
+		var mask = _candidates_mask_for_cell(r, c1)
 		
-		for key in combos.keys():
-			var set_vals = _key_to_sorted_list(key)
-			if set_vals.size() == subset_size and combos[key].size() == subset_size:
-				# Eliminar estos valores de otras celdas en el grupo
-				for pos in positions:
-					if not combos[key].has(pos):
-						for val in set_vals:
-							if candidates[pos.x][pos.y].has(val):
-								candidates[pos.x][pos.y].erase(val)
-								changed = true
+		for remove_c in range(n):
+			if remove_c != c1 and remove_c != c2 and board[r][remove_c] == 0:
+				var remove_mask = _candidates_mask_for_cell(r, remove_c)
+				var new_mask = remove_mask & (~mask)
+				if new_mask != remove_mask and _bit_count(new_mask) == 1:
+					# Solo aplicar si resulta en un naked single
+					var val = _lowest_bit_index(new_mask) + 1
+					board[r][remove_c] = val
+					_assign_value(board, r, remove_c, val)
+					changed = true
+	else:
+		# Lógica similar para columnas
+		var c = idx1
+		var r1 = idx2
+		var r2 = idx3
+		var mask = _candidates_mask_for_cell(r1, c)
+		
+		for remove_r in range(n):
+			if remove_r != r1 and remove_r != r2 and board[remove_r][c] == 0:
+				var remove_mask = _candidates_mask_for_cell(remove_r, c)
+				var new_mask = remove_mask & (~mask)
+				if new_mask != remove_mask and _bit_count(new_mask) == 1:
+					var val = _lowest_bit_index(new_mask) + 1
+					board[remove_r][c] = val
+					_assign_value(board, remove_r, c, val)
+					changed = true
 	
 	return changed
 
-## Aplica técnica de pointing pairs (cuando un candidato aparece solo en una fila/columna dentro de una caja)
-static func _apply_pointing_pairs(candidates: Array, n: int) -> bool:
-	var changed = false
-	var box_size = int(sqrt(float(n)))
-	
-	for brow in range(0, n, box_size):
-		for bcol in range(0, n, box_size):
-			for val in range(1, n + 1):
-				var positions = []
-				# Encontrar todas las apariciones del valor en la caja
-				for r in range(brow, brow + box_size):
-					for c in range(bcol, bcol + box_size):
-						if candidates[r][c].has(val):
-							positions.append(Vector2i(r, c))
-				
-				if positions.size() == 0:
-					continue
-				
-				# Verificar si todas están en la misma fila o columna
-				var same_row = true
-				var same_col = true
-				var first_pos = positions[0]
-				
-				for pos in positions:
-					if pos.x != first_pos.x:
-						same_row = false
-					if pos.y != first_pos.y:
-						same_col = false
-				
-				# Eliminar de la fila/columna fuera de la caja
-				if same_row:
-					for c in range(n):
-						if c < bcol or c >= bcol + box_size:
-							if candidates[first_pos.x][c].has(val):
-								candidates[first_pos.x][c].erase(val)
-								changed = true
-				
-				if same_col:
-					for r in range(n):
-						if r < brow or r >= brow + box_size:
-							if candidates[r][first_pos.y].has(val):
-								candidates[r][first_pos.y].erase(val)
-								changed = true
-	
-	return changed
-
-## Aplica técnica X-Wing para eliminar candidatos
+## Aplica técnica X-Wing optimizada usando el sistema de máscaras
 static func _apply_xwing(board: Array) -> bool:
 	var n = board.size()
-	var candidates = _compute_all_candidates(board)
 	var changed = false
-
-	# Buscar X-Wing en filas
-	for val in range(1, n + 1):
-		for i in range(n - 1):
-			var cols_i = _get_candidate_columns_for_value(candidates, i, val)
-			if cols_i.size() != 2:
-				continue
-			
-			for j in range(i + 1, n):
-				var cols_j = _get_candidate_columns_for_value(candidates, j, val)
-				if cols_j.size() != 2 or cols_i != cols_j:
-					continue
-				
-				# Encontrado X-Wing - eliminar de otras filas en estas columnas
-				for col in cols_i:
-					for r in range(n):
-						if r != i and r != j and candidates[r][col].has(val):
-							candidates[r][col].erase(val)
-							changed = true
 	
-	# Buscar X-Wing en columnas
-	for val in range(1, n + 1):
-		for i in range(n - 1):
-			var rows_i = _get_candidate_rows_for_value(candidates, i, val)
-			if rows_i.size() != 2:
-				continue
-			
-			for j in range(i + 1, n):
-				var rows_j = _get_candidate_rows_for_value(candidates, j, val)
-				if rows_j.size() != 2 or rows_i != rows_j:
-					continue
-				
-				# Encontrado X-Wing - eliminar de otras columnas en estas filas
-				for row in rows_i:
-					for c in range(n):
-						if c != i and c != j and candidates[row][c].has(val):
-							candidates[row][c].erase(val)
-							changed = true
+	# Reiniciar máscaras para tener estado consistente
+	_reset_masks(board)
 	
-	# Aplicar naked singles resultantes
-	if changed:
+	for val in range(1, n + 1):
+		var val_mask = 1 << (val - 1)
+		
+		# X-Wing en filas
+		var row_patterns = {}
 		for r in range(n):
+			var cols = []
 			for c in range(n):
-				if board[r][c] == 0 and candidates[r][c].size() == 1:
-					board[r][c] = candidates[r][c][0]
-		return true
+				if board[r][c] == 0:
+					var cell_mask = _candidates_mask_for_cell(r, c)
+					if cell_mask & val_mask:
+						cols.append(c)
+			if cols.size() == 2:
+				var key = str(cols[0]) + "," + str(cols[1])
+				if not row_patterns.has(key):
+					row_patterns[key] = []
+				row_patterns[key].append(r)
+		
+		# Aplicar X-Wing en filas
+		for pattern in row_patterns:
+			var rows = row_patterns[pattern]
+			if rows.size() == 2:
+				var cols = pattern.split(",")
+				var col1 = int(cols[0])
+				var col2 = int(cols[1])
+				
+				# Eliminar candidatos de otras filas en estas columnas
+				for r in range(n):
+					if not rows.has(r) and board[r][col1] == 0:
+						var cell_mask = _candidates_mask_for_cell(r, col1)
+						if cell_mask & val_mask:
+							_ROW_MASK[r] |= val_mask
+							changed = true
+					
+					if not rows.has(r) and board[r][col2] == 0:
+						var cell_mask = _candidates_mask_for_cell(r, col2)
+						if cell_mask & val_mask:
+							_ROW_MASK[r] |= val_mask
+							changed = true
+		
+		# X-Wing en columnas (completando la técnica)
+		var col_patterns = {}
+		for c in range(n):
+			var rows = []
+			for r in range(n):
+				if board[r][c] == 0:
+					var cell_mask = _candidates_mask_for_cell(r, c)
+					if cell_mask & val_mask:
+						rows.append(r)
+			if rows.size() == 2:
+				var key = str(rows[0]) + "," + str(rows[1])
+				if not col_patterns.has(key):
+					col_patterns[key] = []
+				col_patterns[key].append(c)
+		
+		# Aplicar X-Wing en columnas
+		for pattern in col_patterns:
+			var cols = col_patterns[pattern]
+			if cols.size() == 2:
+				var rows = pattern.split(",")
+				var row1 = int(rows[0])
+				var row2 = int(rows[1])
+				
+				# Eliminar candidatos de otras columnas en estas filas
+				for c in range(n):
+					if not cols.has(c) and board[row1][c] == 0:
+						var cell_mask = _candidates_mask_for_cell(row1, c)
+						if cell_mask & val_mask:
+							_COL_MASK[c] |= val_mask
+							changed = true
+					
+					if not cols.has(c) and board[row2][c] == 0:
+						var cell_mask = _candidates_mask_for_cell(row2, c)
+						if cell_mask & val_mask:
+							_COL_MASK[c] |= val_mask
+							changed = true
+	
+	# Si hubo cambios, aplicar naked singles inmediatamente
+	if changed:
+		return _apply_singles(board)
 	
 	return false
 

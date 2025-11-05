@@ -1,14 +1,14 @@
 extends Button
 class_name GridButton
 
+@onready var control: Control = $".."
 @onready var label = %Label
-@onready var color = %Color
 
 enum CellStates { NORMAL, OPTION, SELECTED, CORRECT, WRONG, ZONE }
 
 var cell_states: Dictionary = {
 	CellStates.NORMAL: Color("#1E1E1E"),
-	CellStates.OPTION: Color("2B2B2B"), 
+	CellStates.OPTION: Color("3A3A3A"), 
 	CellStates.SELECTED: Color("007F5F"),
 	CellStates.ZONE: Color("b2b2b278")
 }
@@ -18,15 +18,16 @@ var c_answer: int = 0
 var answer: int = 0
 var pos: Vector2i = Vector2i.ZERO
 var zone: int = -1
-var box_index: int = -1
 var current_state: CellStates = CellStates.NORMAL
 
 func _ready():
-	custom_minimum_size = Vector2(48, 48)
-	add_theme_font_size_override("font_size", 24)
+	var custom_size = Vector2.ONE * ((720-48) / Settings.GRID_SIZE)
+	control.custom_minimum_size = custom_size
+	label.label_settings.font_size = custom_size.x / 2
 	if solved:
 		_set_text(answer)
-
+	update_state(null)
+	
 func update_state(btn: GridButton) -> void:
 	current_state = CellStates.NORMAL
 	
@@ -34,27 +35,24 @@ func update_state(btn: GridButton) -> void:
 		set_state(current_state)
 		return
 	
-	if btn.pos.x == pos.x or btn.pos.y == pos.y or (btn.box_index == box_index and zone == -1):
+	if btn.pos.x == pos.x or btn.pos.y == pos.y or btn.zone == zone and zone != -1:
 		current_state = CellStates.OPTION
-	if btn.zone == zone and zone != -1:
-		current_state = CellStates.ZONE
 	if btn == self or btn.answer == answer and solved and btn.solved:
 		current_state = CellStates.SELECTED
-	color.visible = false
-	color.self_modulate = Settings.colores_acentos[zone]
+		emit_signal("mouse_entered")
 	
 	set_state(current_state)
 
 func set_state(state: CellStates):
 	current_state = state
-	self_modulate = cell_states[state]
+	if not label: label = $Label
 	label.self_modulate = Color.WHITE
 	if solved and c_answer != -1:
 		label.self_modulate = Color("#359734")
 	elif not solved and c_answer != -1:
 		label.self_modulate = Color.DARK_RED
-	if Settings.ZONES:
-		self_modulate = Settings.colores_acentos[zone]
+	get_theme_stylebox("normal").border_color = Settings.colores_acentos[zone] if Settings.ZONES else Color("000000")
+	get_theme_stylebox("normal").bg_color = cell_states[state]
 
 func set_answer(value: int) -> bool:
 	if value == answer:

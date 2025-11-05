@@ -1,45 +1,63 @@
-[gd_scene load_steps=8 format=3 uid="uid://b4dd52j6kdw0e"]
+[gd_scene load_steps=6 format=3 uid="uid://b4dd52j6kdw0e"]
 
 [ext_resource type="Script" uid="uid://bnanodrjocohb" path="res://scripts/grid_button.gd" id="1_mi6dp"]
 [ext_resource type="FontFile" uid="uid://ny1uo4wyolu3" path="res://Font/Inter_18pt-Regular.ttf" id="2_rhj8v"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mi6dp"]
+resource_local_to_scene = true
 content_margin_left = 4.0
 content_margin_top = 4.0
 content_margin_right = 4.0
 content_margin_bottom = 4.0
 bg_color = Color(1, 1, 1, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
 border_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 corner_detail = 16
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_rhj8v"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_3q610"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_mi6dp"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_3q610"]
 font = ExtResource("2_rhj8v")
 
-[node name="GridButton" type="Button"]
-custom_minimum_size = Vector2(32, 32)
-offset_right = 8.0
-offset_bottom = 8.0
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rhj8v"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(1, 0, 0, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GridButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 48
 theme_override_styles/normal = SubResource("StyleBoxFlat_mi6dp")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty_rhj8v")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_3q610")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_mi6dp")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_mi6dp")
+theme_override_styles/hover = SubResource("StyleBoxFlat_mi6dp")
+theme_override_styles/focus = SubResource("StyleBoxFlat_mi6dp")
 script = ExtResource("1_mi6dp")
 
-[node name="Label" type="Label" parent="."]
+[node name="Label" type="Label" parent="GridButton"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -51,14 +69,14 @@ label_settings = SubResource("LabelSettings_3q610")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Color" type="ColorRect" parent="."]
+[node name="Panel" type="Panel" parent="GridButton"]
 unique_name_in_owner = true
+visible = false
 show_behind_parent = true
-custom_minimum_size = Vector2(36, 36)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_rhj8v")

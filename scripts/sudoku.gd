@@ -13,6 +13,8 @@ var grid: Dictionary = {} # Vector2i(x,y): { "value": int, "solution": int, "but
 var grid_containers: Array = [] # Holds the GridContainer nodes for subgrids
 var selected_button: GridButton = null
 var box_size: int = -1
+var solved: Dictionary = {} # { int (0 - (n - 1) : int (n)
+var total: int = 0
 
 func _reset() -> void:
 	if grid_container:
@@ -21,12 +23,18 @@ func _reset() -> void:
 	grid.clear()
 	grid_containers.clear()
 	selected_button = null
+	solved.clear()
+	total = 0
 
-func init_game(board_dict: Dictionary):
+func init_game(overwrite: bool = true):
+	var board_dict: Dictionary = SudokuBoard.generate_board(Settings.GRID_SIZE, Settings.DIFFICULTY, Settings.ZONES) if overwrite else Settings.saved_game
+	Dlv._solve_sudoku(board_dict)
+	
 	_reset()
 	box_size = int(sqrt(Settings.GRID_SIZE))
 	set_grid_container()
 	
+	game_ui.bind_select_grid_button_actions()
 	_create_grid_containers()
 	set_grid(board_dict)
 	
@@ -62,38 +70,68 @@ func _create_grid_containers():
 			n_grid.columns = box_size
 			grid_container.add_child(n_grid)
 			grid_containers.append(n_grid)
+	
 
 func _create_grid_buttons() -> void:
+	var button_groups = {}  # Diccionario para agrupar por distancia
+	var center = Vector2(Settings.GRID_SIZE/2.0 - 0.5, Settings.GRID_SIZE/2.0 - 0.5)  # Centro del grid
+	
+	# Primer paso: crear todos los botones y agruparlos por distancia
 	for row in range(Settings.GRID_SIZE):
 		for col in range(Settings.GRID_SIZE):
-			var key = Vector2i(col, row)
 			var box_row = int(row / box_size)
 			var box_col = int(col / box_size)
 			var box_index = (box_row * box_size + box_col)
 			var container = grid_containers[box_index]
-			var grid_button = _create_grid_button(key, box_index)
-			grid[key]["button"] = grid_button
-			container.add_child(grid_button)
+			var grid_button = _create_grid_button(Vector2i(col, row), box_index)
+			
+			container.add_child(grid_button.get_parent())
+			grid_button.hide()
+			
+			# Calcular distancia al centro
+			var distance = Vector2(col, row).distance_to(center)
+			
+			# Agrupar por distancia (usamos snapped para evitar problemas de precisión flotante)
+			var rounded_distance = snapped(distance, 0.01)
+			if not button_groups.has(rounded_distance):
+				button_groups[rounded_distance] = []
+			button_groups[rounded_distance].append(grid_button)
+	
+	# Obtener las distancias ordenadas
+	var sorted_distances = button_groups.keys()
+	sorted_distances.sort()
+	
+	# Mostrar y animar por grupos de distancia
+	for distance in sorted_distances:
+		var buttons_in_group = button_groups[distance]
+		
+		# Mostrar todos los botones de este grupo simultáneamente
+		for grid_button in buttons_in_group:
+			grid_button.show()
+			Settings.ui_sounds.connect_signals(grid_button)
+			Settings.ui_sounds.animate_hover(grid_button)
+		
+		# Esperar antes del siguiente grupo
+		await get_tree().create_timer(0.05).timeout
 
 func _create_grid_button(pos: Vector2i, box_index: int) -> GridButton:
-	var grid_button: GridButton = grid_button_scene.instantiate()
-	grid_button.pos = pos
+	var grid_button: GridButton = grid_button_scene.instantiate().get_node("GridButton")
 	var cell_data = grid[pos]
-	
-	# If cell has initial value, show it and mark as fixed
-	if cell_data["value"] != 0:
-		grid_button.c_answer = -1
-		grid_button.solved = true
-	
+	grid[pos]["button"] = grid_button
+	grid_button.pos = pos
 	grid_button.zone = cell_data["zone"]
 	grid_button.answer = cell_data["solution"]
-	grid_button.box_index = box_index
+	
+	# If cell has initial value, show it and mark as fixed
+	if cell_data["value"] == cell_data["solution"]:
+		grid_button.c_answer = -1
+		grid_button.solved = true
+		_number_solved(cell_data["value"])
+	
 	# connections
 	grid_button.pressed.connect(_on_grid_button_pressed.bind(grid_button))
 	connect("ButtonSelected", grid_button.update_state)
-	
-	if selected_button == null:
-		selected_button = grid_button
+	selected_button = grid_button
 		
 	return grid_button
 
@@ -116,18 +154,14 @@ func _on_select_grid_button_pressed(number_pressed):
 		game_ui.errores += 1
 
 func _number_solved(n: int) -> void:
-	var solved: int = 0
-	for key in grid:
-		var button: GridButton = grid[key]["button"]
-		if button.answer == n and button.solved:
-			solved += 1
-	if solved == Settings.GRID_SIZE:
-		for i in range(game_ui.buttons.size() - 1, -1, -1):
-			if game_ui.buttons[i].text == str(n):
-				game_ui.buttons[i].queue_free()
-				game_ui.buttons.remove_at(i)
-				break
-	if game_ui.buttons.is_empty():
+	if not solved.has(n):
+		solved[n] = 0 
+	solved[n] += 1
+	total += 1
+	if solved[n] == Settings.GRID_SIZE:
+		game_ui.select_grid.get_node(str(n)).queue_free()
+	
+	if total == (Settings.GRID_SIZE * Settings.GRID_SIZE):
 		Settings.emit_signal("GameOver", "win")
 
 func _update_data(pos: Vector2i, number: int) -> void:

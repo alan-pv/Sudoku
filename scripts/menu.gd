@@ -13,7 +13,7 @@ extends Control
 
 var index: int = 2:
 	set(value):
-		if value < 2 or value > 5:
+		if value < 1 or value > 3:
 			return
 		index = value
 
@@ -29,28 +29,41 @@ func _ready():
 	Settings.GetMenu.emit()
 
 func _on_easy_pressed(): 
-	Settings.DIFFICULTY = SudokuBoard.TypeDifficulty.EASY
-	Settings.saved_games[Settings.GRID_SIZE] = SudokuBoard.generate_board(Settings.GRID_SIZE, Settings.DIFFICULTY, Settings.ZONES)
-	sudoku.init_game(Settings.saved_games[Settings.GRID_SIZE])
+	Settings.GRID_SIZE = 4
+	sudoku.init_game(true)
 func _on_medium_pressed(): 
-	Settings.DIFFICULTY = SudokuBoard.TypeDifficulty.MEDIUM
-	Settings.saved_games[Settings.GRID_SIZE] = SudokuBoard.generate_board(Settings.GRID_SIZE, Settings.DIFFICULTY, Settings.ZONES)
-	sudoku.init_game(Settings.saved_games[Settings.GRID_SIZE])
+	Settings.GRID_SIZE = 9
+	sudoku.init_game(true)
 func _on_hard_pressed(): 
-	Settings.DIFFICULTY = SudokuBoard.TypeDifficulty.HARD
-	Settings.saved_games[Settings.GRID_SIZE] = SudokuBoard.generate_board(Settings.GRID_SIZE, Settings.DIFFICULTY, Settings.ZONES)
-	sudoku.init_game(Settings.saved_games[Settings.GRID_SIZE])
+	Settings.GRID_SIZE = 16
+	sudoku.init_game(true)
 func _on_continue_pressed():
-	sudoku.init_game(Settings.saved_games[Settings.GRID_SIZE])
+	if Settings.saved_game:
+		sudoku.init_game(false)
 
 func _on_prev_size_pressed(): update_index(index - 1)
 func _on_next_size_pressed(): update_index(index + 1)
 func _on_zones_pressed(): Settings.ZONES = !Settings.ZONES
 
 func update_index(n: int) -> void:
+	var dificultad: String = ""
 	index = n
-	Settings.GRID_SIZE = index * index
-	size_grid.text = "%d x %d" % [index, index]
+	prev_size.get_child(0).show()
+	next_size.get_child(0).show()
+	match index:
+		1:
+			prev_size.get_child(0).hide()
+			dificultad = "Easy"
+			Settings.DIFFICULTY = SudokuBoard.TypeDifficulty.EASY
+		2: 
+			dificultad = "Medium"
+			Settings.DIFFICULTY = SudokuBoard.TypeDifficulty.MEDIUM
+		3:
+			next_size.get_child(0).hide()
+			dificultad = "Hard"
+			Settings.DIFFICULTY = SudokuBoard.TypeDifficulty.HARD
+	
+	size_grid.text = str(dificultad)
 
 func _on_options_pressed():
 	pass # Replace with function body.
