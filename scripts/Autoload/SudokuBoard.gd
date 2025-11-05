@@ -29,7 +29,7 @@ static var _ALL_MASK: int = 0
 
 static func generate_board(n: int = 9, dificultad: TypeDifficulty = TypeDifficulty.EASY, zones: bool = false) -> Dictionary:
 	_USE_ZONES = zones
-	_ZONE_MAP = [] # reset
+	_ZONE_MAP = [] 
 	_zone_cells_cache = {}
 	box_size = int(sqrt(float(n)))
 	if box_size * box_size != n:
@@ -471,7 +471,7 @@ static func _generate_puzzle(full: Array, dificultad: TypeDifficulty) -> Array:
 ## Ajustar porcentajes para mejor equilibrio dificultad/velocidad
 static func _difficulty_to_filled_count(n: int, dificultad: TypeDifficulty) -> int:
 	var total = n * n
-	var fill_percent: float = 0.45  # Más conservador
+	var fill_percent: float = 0.45  
 	
 	match dificultad:
 		TypeDifficulty.EASY:
