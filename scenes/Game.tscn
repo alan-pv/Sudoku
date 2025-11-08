@@ -1,10 +1,11 @@
-[gd_scene load_steps=27 format=3 uid="uid://dv2weqgbjob0t"]
+[gd_scene load_steps=28 format=3 uid="uid://dv2weqgbjob0t"]
 
 [ext_resource type="Script" uid="uid://nfhcgmos3u8p" path="res://scripts/game.gd" id="1_cdfni"]
 [ext_resource type="Script" uid="uid://c3bi06rrusery" path="res://scripts/main.gd" id="1_s0nni"]
 [ext_resource type="Script" uid="uid://cbmiw7okk0usn" path="res://scripts/ui_sounds.gd" id="2_vjgi4"]
 [ext_resource type="Script" uid="uid://2jeiqi6v80b3" path="res://scripts/game_ui.gd" id="3_cpr0p"]
 [ext_resource type="Script" uid="uid://b13yjmmayxmr5" path="res://scripts/sudoku.gd" id="4_kiw3p"]
+[ext_resource type="Script" uid="uid://pigk5t1itqw6" path="res://scripts/button_animations.gd" id="5_a8wo8"]
 [ext_resource type="Script" uid="uid://dr53bksnhf61" path="res://scripts/menu.gd" id="5_aug50"]
 [ext_resource type="Script" uid="uid://f68whvanrlg7" path="res://scripts/popup.gd" id="5_kyk2p"]
 [ext_resource type="FontFile" uid="uid://ny1uo4wyolu3" path="res://Font/Inter_18pt-Regular.ttf" id="7_g4kob"]
@@ -74,6 +75,10 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("4_kiw3p")
+
+[node name="ButtonAnimations" type="Node" parent="Game/Sudoku"]
+unique_name_in_owner = true
+script = ExtResource("5_a8wo8")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 unique_name_in_owner = true
@@ -460,7 +465,7 @@ offset_right = 256.0
 offset_bottom = 384.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 32
 
 [node name="Icon" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer"]
 unique_name_in_owner = true
@@ -510,7 +515,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_fonts/font = ExtResource("7_g4kob")
 theme_override_font_sizes/font_size = 24
-text = "Medium"
+text = "Sudoku"
 horizontal_alignment = 1
 
 [node name="NextSize" type="Button" parent="CanvasLayer/Menu/VBoxContainer/HBoxContainer"]
@@ -551,21 +556,21 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme = ExtResource("8_400sg")
-text = "2x2"
+text = "Easy"
 
 [node name="Medium" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme = ExtResource("8_400sg")
-text = "3x3"
+text = "Medium"
 
 [node name="Hard" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme = ExtResource("8_400sg")
-text = "4x4"
+text = "Hard"
 
 [node name="Continue" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer"]
 unique_name_in_owner = true
@@ -573,6 +578,36 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme = ExtResource("8_400sg")
 text = "Continue"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 32
+alignment = 1
+
+[node name="two" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
+theme = ExtResource("8_400sg")
+toggle_mode = true
+text = "2x2"
+
+[node name="three" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
+theme = ExtResource("8_400sg")
+toggle_mode = true
+text = "3x3"
+
+[node name="four" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
+theme = ExtResource("8_400sg")
+toggle_mode = true
+text = "4x4"
 
 [node name="Control" type="Control" parent="CanvasLayer/Menu"]
 custom_minimum_size = Vector2(512, 99)
@@ -815,6 +850,9 @@ text = "Share"
 [connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/Medium" to="CanvasLayer/Menu" method="_on_medium_pressed"]
 [connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/Hard" to="CanvasLayer/Menu" method="_on_hard_pressed"]
 [connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/Continue" to="CanvasLayer/Menu" method="_on_continue_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer/two" to="CanvasLayer/Menu" method="_on_two_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer/three" to="CanvasLayer/Menu" method="_on_three_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer/four" to="CanvasLayer/Menu" method="_on_four_pressed"]
 [connection signal="pressed" from="CanvasLayer/Menu/Control/VBoxContainer/EliminarAnuncios" to="CanvasLayer/Menu" method="_on_eliminar_anuncios_pressed"]
 [connection signal="pressed" from="CanvasLayer/Popup/Pause/Win/VBoxContainer/NewGame" to="CanvasLayer/Popup" method="_on_new_game_pressed"]
 [connection signal="pressed" from="CanvasLayer/Popup/Pause/Win/VBoxContainer/HBoxContainer2/Back" to="CanvasLayer/Popup" method="_on_back_pressed"]

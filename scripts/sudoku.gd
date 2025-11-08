@@ -3,64 +3,191 @@ class_name Sudoku
 
 signal ButtonSelected(btn: GridButton)
 signal NumberSolved(value: int)
+signal GenerationCompleted(board_dict: Dictionary)  # Nueva señal
 
 @onready var game_ui = %GameUI
 @onready var grid_container = %GridContainer
+@onready var button_animations = %ButtonAnimations
 @onready var grid_button_scene = preload("res://scenes/button.tscn")
 
 # Grid data structure
-var grid: Dictionary = {} # Vector2i(x,y): { "value": int, "solution": int, "button": GridButton }
-var grid_containers: Array = [] # Holds the GridContainer nodes for subgrids
+var grid: Dictionary = {} 
+var grid_containers: Array = []
 var selected_button: GridButton = null
 var box_size: int = -1
-var solved: Dictionary = {} # { int (0 - (n - 1) : int (n)
+var solved: Dictionary = {}
 var total: int = 0
+
+# Variables para generación en paralelo
+var generation_thread: Thread
+var is_generating: bool = false
+var board_dict: Dictionary = {}
+var animation_type: int = 0
+var all_buttons = []
 
 func _reset() -> void:
 	if grid_container:
 		for child in grid_container.get_children():
 			child.queue_free()
-	grid.clear()
-	grid_containers.clear()
 	selected_button = null
+	grid_containers.clear()
 	solved.clear()
+	grid.clear()
 	total = 0
+	all_buttons = []
+	
+	# Limpiar hilo si existe
+	if generation_thread and generation_thread.is_alive():
+		generation_thread.wait_to_finish()
+		generation_thread = null
 
 func init_game(overwrite: bool = true):
-	var board_dict: Dictionary = SudokuBoard.generate_board(Settings.GRID_SIZE, Settings.DIFFICULTY, Settings.ZONES) if overwrite else Settings.saved_game
-	Dlv._solve_sudoku(board_dict)
-	
 	_reset()
 	box_size = int(sqrt(Settings.GRID_SIZE))
 	set_grid_container()
 	
-	game_ui.bind_select_grid_button_actions()
 	_create_grid_containers()
-	set_grid(board_dict)
 	
-	_create_grid_buttons()
+	# INICIAR GENERACIÓN EN PARALELO
+	_start_parallel_generation(overwrite)
+	
+	# CREAR BOTONES INMEDIATAMENTE (no esperar a la generación)
+	_create_grid_buttons_empty()
+
+## Iniciar generación en un hilo separado
+func _start_parallel_generation(overwrite: bool) -> void:
+	is_generating = true
+	generation_thread = Thread.new()
+	generation_thread.start(_generate_board_in_thread.bind(overwrite))
+	if not GenerationCompleted.is_connected(_on_generation_completed):
+		GenerationCompleted.connect(_on_generation_completed)
+
+## Función que se ejecuta en el hilo
+func _generate_board_in_thread(overwrite: bool) -> void:
+	# Generar el tablero en el hilo (esto ya no bloquea la UI)
+	var generated_board = SudokuBoard.generate_board(Settings.GRID_SIZE, Settings.DIFFICULTY, Settings.ZONES) if overwrite else Settings.saved_game
+	Dlv._solve_sudoku(generated_board)
+	
+	# Notificar al hilo principal que la generación terminó
+	call_deferred("emit_signal", "GenerationCompleted", generated_board)
+
+## Cuando la generación termina
+func _on_generation_completed(generated_board: Dictionary) -> void:
+	board_dict = generated_board
+	is_generating = false
+	
+	# Esperar a que el hilo termine
+	if generation_thread and generation_thread.is_alive():
+		generation_thread.wait_to_finish()
+		generation_thread = null
+	
+	# Si los botones ya están creados, actualizar con la información real
+	if not grid.is_empty():
+		_update_grid_with_real_data()
+
+## Crear botones vacíos inmediatamente (sin esperar la generación)
+func _create_grid_buttons_empty() -> void:
+	# Crear botones con datos temporales/vacíos
+	for row in range(Settings.GRID_SIZE):
+		for col in range(Settings.GRID_SIZE):
+			var box_row = int(row / box_size)
+			var box_col = int(col / box_size)
+			var box_index = (box_row * box_size + box_col)
+			var container = grid_containers[box_index]
+			var grid_button = _create_grid_button()
+			var pos = Vector2i(col, row)
+			
+			# Inicializar con diccionario vacío
+			grid[pos] = {"button": grid_button}
+			grid_button.set_data({}, pos)  # Pasar diccionario vacío
+			
+			container.add_child(grid_button.get_parent())
+			grid_button.hide()
+			all_buttons.append(grid_button)
+	
+	# Animación de aparición de botones vacíos
+	animation_type = randi() % 7
+	button_animations.set_grid_size(Settings.GRID_SIZE)
+	button_animations.animate_buttons(all_buttons, animation_type, true, false)
+	
+	# Si la generación ya terminó, proceder inmediatamente
+	if not is_generating and not board_dict.is_empty():
+		_update_grid_with_real_data()
+		_reveal_numbers_animation()
+	else:
+		# Mostrar indicador de carga y esperar
+		_show_loading_indicator()
+
+## Mostrar indicador de carga mientras se genera
+func _show_loading_indicator() -> void:
+	
+	# Esperar hasta que la generación termine
+	while is_generating:
+		await get_tree().create_timer(0.01).timeout
+	
+	# Cuando termine, actualizar y revelar números
+	_update_grid_with_real_data()
+	_reveal_numbers_animation()
+
+## Crear botón (sin datos reales aún)
+func _create_grid_button() -> GridButton:
+	var grid_button: GridButton = grid_button_scene.instantiate().get_node("GridButton")
+	
+	# connections
+	grid_button.pressed.connect(_on_grid_button_pressed.bind(grid_button))
+	grid_button.Solved.connect(_number_solved)
+	connect("ButtonSelected", grid_button.update_state)
+	
+	# Actualizar selected_button
+	if not selected_button:
+		selected_button = grid_button
+	
+	return grid_button
+
+## Actualizar la grid con los datos reales del sudoku generado
+func _update_grid_with_real_data() -> void:
+	# Establecer los datos reales del tablero generado SIN revelar números
+	for row in range(Settings.GRID_SIZE):
+		for col in range(Settings.GRID_SIZE):
+			var key = Vector2i(col, row)
+			var entry = board_dict.get(key, {"value": 0, "solution": 0, "zone": 0})
+			
+			grid[key] = {
+				"value": int(entry["value"]),
+				"solution": int(entry["solution"]),
+				"zone": entry["zone"],
+				"button": grid[key]["button"]
+			}
+			
+			# IMPORTANTE: Solo configurar datos, NO revelar números todavía
+			var grid_button = grid[key]["button"]
+			grid_button.pos = key
+			grid_button.zone = entry["zone"]
+			grid_button.answer = int(entry["solution"])
+			
+			# Configurar estado de resuelto pero NO mostrar el número
+			if entry["value"] == entry["solution"]:
+				grid_button.c_answer = -1
+				grid_button.solved = true
+			else:
+				grid_button.c_answer = 0
+				grid_button.solved = false
+				grid_button._set_text(0)
+
+## Revelar números después de que todo esté listo
+func _reveal_numbers_animation() -> void:
+	button_animations.set_animation_speed(0.075, 0.125)
+	button_animations.animate_buttons(all_buttons, animation_type, false, true)
 	ButtonSelected.emit(selected_button)
+
+func get_data(pos: Vector2i) -> Dictionary:
+	return grid[pos] if grid.has(pos) else {}
 
 func set_grid_container() -> void:
 	grid_container.columns = box_size
 	var separation = 8 if not Settings.ZONES else 4
 	grid_container.add_theme_constant_override("h_separation", separation)
 	grid_container.add_theme_constant_override("v_separation", separation)
-
-func set_grid(dict: Dictionary) -> void:
-	# Populate grid dictionary with board data
-	for row in range(Settings.GRID_SIZE):
-		for col in range(Settings.GRID_SIZE):
-			var key = Vector2i(col, row)
-			var entry = dict.get(key, {"value": 0, "solution": 0, "zone": 0}) 
-			
-			grid[key] = {
-				"value": int(entry["value"]),
-				"solution": int(entry["solution"]),
-				"button": null,
-				"zone": entry["zone"]
-			}
-			
 
 func _create_grid_containers():
 	grid_containers.clear()
@@ -70,70 +197,6 @@ func _create_grid_containers():
 			n_grid.columns = box_size
 			grid_container.add_child(n_grid)
 			grid_containers.append(n_grid)
-	
-
-func _create_grid_buttons() -> void:
-	var button_groups = {}  # Diccionario para agrupar por distancia
-	var center = Vector2(Settings.GRID_SIZE/2.0 - 0.5, Settings.GRID_SIZE/2.0 - 0.5)  # Centro del grid
-	
-	# Primer paso: crear todos los botones y agruparlos por distancia
-	for row in range(Settings.GRID_SIZE):
-		for col in range(Settings.GRID_SIZE):
-			var box_row = int(row / box_size)
-			var box_col = int(col / box_size)
-			var box_index = (box_row * box_size + box_col)
-			var container = grid_containers[box_index]
-			var grid_button = _create_grid_button(Vector2i(col, row), box_index)
-			
-			container.add_child(grid_button.get_parent())
-			grid_button.hide()
-			
-			# Calcular distancia al centro
-			var distance = Vector2(col, row).distance_to(center)
-			
-			# Agrupar por distancia (usamos snapped para evitar problemas de precisión flotante)
-			var rounded_distance = snapped(distance, 0.01)
-			if not button_groups.has(rounded_distance):
-				button_groups[rounded_distance] = []
-			button_groups[rounded_distance].append(grid_button)
-	
-	# Obtener las distancias ordenadas
-	var sorted_distances = button_groups.keys()
-	sorted_distances.sort()
-	
-	# Mostrar y animar por grupos de distancia
-	for distance in sorted_distances:
-		var buttons_in_group = button_groups[distance]
-		
-		# Mostrar todos los botones de este grupo simultáneamente
-		for grid_button in buttons_in_group:
-			grid_button.show()
-			Settings.ui_sounds.connect_signals(grid_button)
-			Settings.ui_sounds.animate_hover(grid_button)
-		
-		# Esperar antes del siguiente grupo
-		await get_tree().create_timer(0.05).timeout
-
-func _create_grid_button(pos: Vector2i, box_index: int) -> GridButton:
-	var grid_button: GridButton = grid_button_scene.instantiate().get_node("GridButton")
-	var cell_data = grid[pos]
-	grid[pos]["button"] = grid_button
-	grid_button.pos = pos
-	grid_button.zone = cell_data["zone"]
-	grid_button.answer = cell_data["solution"]
-	
-	# If cell has initial value, show it and mark as fixed
-	if cell_data["value"] == cell_data["solution"]:
-		grid_button.c_answer = -1
-		grid_button.solved = true
-		_number_solved(cell_data["value"])
-	
-	# connections
-	grid_button.pressed.connect(_on_grid_button_pressed.bind(grid_button))
-	connect("ButtonSelected", grid_button.update_state)
-	selected_button = grid_button
-		
-	return grid_button
 
 func _on_grid_button_pressed(grid_button: GridButton):
 	selected_button = grid_button
@@ -154,14 +217,10 @@ func _on_select_grid_button_pressed(number_pressed):
 		game_ui.errores += 1
 
 func _number_solved(n: int) -> void:
-	if not solved.has(n):
-		solved[n] = 0 
-	solved[n] += 1
-	total += 1
-	if solved[n] == Settings.GRID_SIZE:
-		game_ui.select_grid.get_node(str(n)).queue_free()
+	if not solved.has(n): solved[n] = 0 
+	solved[n] += 1; total += 1
 	
-	if total == (Settings.GRID_SIZE * Settings.GRID_SIZE):
+	if total >= (Settings.GRID_SIZE * Settings.GRID_SIZE):
 		Settings.emit_signal("GameOver", "win")
 
 func _update_data(pos: Vector2i, number: int) -> void:
@@ -216,3 +275,8 @@ func _get_row_values(row: int) -> Array:
 	for col in range(Settings.GRID_SIZE):
 		row_list.append(grid[Vector2i(col, row)]["value"])
 	return row_list
+
+func _exit_tree() -> void:
+	# Asegurarse de limpiar el hilo al salir
+	if generation_thread and generation_thread.is_alive():
+		generation_thread.wait_to_finish()

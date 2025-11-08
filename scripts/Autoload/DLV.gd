@@ -16,8 +16,7 @@ func _solve_sudoku(sudoku: Dictionary):
 	if abs_path == "":
 		push_error("No se guardó el archivo.")
 		return
-	print("Archivo guardado en (ruta absoluta): ", abs_path)
-	print("Ahora puedes ejecutar desde CMD: dlv \"", abs_path, "\"")
+	print("Archivo guardado en: ", abs_path)
 
 
 # build_dlv_text adaptada para Dictionary con keys (x,y)

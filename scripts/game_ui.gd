@@ -25,6 +25,9 @@ func _ready():
 	Settings.connect("GameOver", _end_game)
 
 func _start_game() -> void:
+	for button in select_grid.get_children():
+		button.queue_free()
+	bind_select_grid_button_actions()
 	_reset_game_stats()
 	timer.start()
 	_update_ui()
@@ -32,8 +35,6 @@ func _start_game() -> void:
 func _end_game(state: String) -> void:
 	if state == "win":
 		Settings.save_stats({ "global_time": Time.get_datetime_dict_from_system(), "time": time, "dificultad": Settings.DIFFICULTY } )
-	for button in select_grid.get_children():
-		button.queue_free()
 	_reset_game_stats()
 	timer.stop()
 	_update_ui()

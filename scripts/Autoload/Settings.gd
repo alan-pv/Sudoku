@@ -4,7 +4,7 @@ signal GameStart
 signal GameOver(state: String)
 signal GetMenu
 
-var GRID_SIZE = 4
+var GRID_SIZE = 9
 var DIFFICULTY = SudokuBoard.TypeDifficulty.EASY
 var ZONES: bool = false
 

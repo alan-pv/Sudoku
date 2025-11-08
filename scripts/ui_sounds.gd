@@ -37,12 +37,13 @@ func install_sounds(node: Node) -> void:
 		
 		install_sounds(child)
 
-func connect_signals(node: Node) -> void:
-	node.mouse_entered.connect(_on_hover)
-	node.pressed.connect(_on_click)
-	node.mouse_entered.connect(animate_hover.bind(node))
-	node.pressed.connect(animate_hover.bind(node))
-	node.mouse_filter = Control.MOUSE_FILTER_STOP
+func connect_signals(node: GridButton) -> void:
+	if not node.mouse_entered.is_connected(_on_hover):
+		node.mouse_entered.connect(_on_hover)
+		node.pressed.connect(_on_click)
+		node.mouse_entered.connect(animate_hover.bind(node))
+		node.pressed.connect(animate_hover.bind(node))
+		node.mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _on_hover() -> void:
 	#Audio.play_audio(ui_hover)
