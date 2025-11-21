@@ -1,18 +1,45 @@
-% SUDOKU 4x4 (ejemplo)
-tab(0,0,1).
-tab(1,2,2).
-tab(2,1,3).
-tab(3,3,4).
+% SUDOKU (entradas: tab(X,Y,Z,V); V=0 => vacía)
+% Hechos generados desde el diccionario de Godot
 
+tab(0,0,0,4).
+tab(0,1,0,2).
+tab(0,2,2,3).
+tab(0,3,2,1).
+tab(1,0,0,3).
+tab(1,1,0,0).
+tab(1,2,2,4).
+tab(1,3,2,0).
+tab(2,0,1,1).
+tab(2,1,1,3).
+tab(2,2,3,2).
+tab(2,3,3,4).
+tab(3,0,1,2).
+tab(3,1,1,0).
+tab(3,2,3,1).
+tab(3,3,3,0).
+
+% Parametro: tamanio del Sudoku
 #const n = 4.
-#const b = 2.
 
-1 { tab(X,Y,1..n) } 1 :- X=0..n-1, Y=0..n-1.
+% Extrae zonas y fijos
+zone(X,Y,Z) :- tab(X,Y,Z,_).
+val(X,Y,V) :- tab(X,Y,_,V), V > 0.
 
-:- tab(X,Y1,V), tab(X,Y2,V), Y1 != Y2.
-:- tab(X1,Y,V), tab(X2,Y,V), X1 != X2.
+% Eleccion para casillas vacias (V == 0)
+1 { val(X,Y,1..n) } 1 :- tab(X,Y,_,0).
 
-:- V = 1..n, BX = 0..b-1, BY = 0..b-1, DX1 = 0..b-1, DY1 = 0..b-1, DX2 = 0..b-1, DY2 = 0..b-1,
-   X1 = BX*b + DX1, Y1 = BY*b + DY1, X2 = BX*b + DX2, Y2 = BY*b + DY2,
-   IDX1 = DX1*b + DY1, IDX2 = DX2*b + DY2, IDX1 < IDX2,
-   tab(X1,Y1,V), tab(X2,Y2,V).
+% Unicidad en fila y columna
+:- val(X,Y1,V), val(X,Y2,V), Y1 <> Y2.
+:- val(X1,Y,V), val(X2,Y,V), X1 <> X2.
+
+% Unicidad por zona (jigsaw): dos celdas distintas de la misma zona no pueden tener el mismo valor
+:- V = 1..n,
+   X1 = 0..4-1, Y1 = 0..4-1, X2 = 0..4-1, Y2 = 0..4-1,
+   ID1 = X1*4 + Y1, ID2 = X2*4 + Y2, ID1 < ID2,
+   val(X1,Y1,V), val(X2,Y2,V),
+   zone(X1,Y1,Z), zone(X2,Y2,Z).
+
+% Salida: solved(X,Y,Z,V) con la solucion encontrada
+solved(X,Y,Z,V) :- val(X,Y,V), zone(X,Y,Z).
+
+#show solved/4.
