@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 Settings="*res://scripts/Autoload/Settings.gd"
 Dlv="*res://scripts/Autoload/DLV.gd"
+DatasetGenerator="*res://scripts/Autoload/DatasetGenerator.gd"
 
 [debug]
 

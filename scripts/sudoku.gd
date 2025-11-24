@@ -66,6 +66,7 @@ func _start_parallel_generation(overwrite: bool) -> void:
 func _generate_board_in_thread(overwrite: bool) -> void:
 	# Generar el tablero en el hilo (esto ya no bloquea la UI)
 	var generated_board = SudokuBoard.generate_board(Settings.GRID_SIZE, Settings.DIFFICULTY, Settings.ZONES) if overwrite else Settings.saved_game
+	print(generated_board)
 	Dlv._solve_sudoku(generated_board)
 	
 	# Notificar al hilo principal que la generación terminó
