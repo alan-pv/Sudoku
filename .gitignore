@@ -1,3 +1,14 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Exported builds
+/build/
+*.exe
+*.pck
+*.x86_64
+
+# Editor / OS leftovers
+*.tmp
+*~
+*.bak
