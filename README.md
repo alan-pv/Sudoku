@@ -6,7 +6,14 @@ Plays 4x4, 9x9 and 16x16 boards with either the standard boxes or **jigsaw
 (irregular) regions**, across three difficulties. Puzzles are generated on the
 fly, and every one of them has a single solution reachable without guessing.
 
-<!-- screenshot: the 9x9 board mid-game -->
+![A 9x9 jigsaw board being solved](docs/gameplay.gif)
+
+|  |  |
+|---|---|
+| ![A jigsaw 9x9 board](docs/jigsaw-9x9.png) | ![A regular 9x9 board mid-game](docs/board-mid-game.png) |
+| **Jigsaw** — regions are connected shapes, each with its own colour | **Regular** — the standard boxes, with every 1 on the board highlighted |
+
+![The main menu](docs/main-menu.png)
 
 ## What it does
 
@@ -15,7 +22,7 @@ fly, and every one of them has a single solution reachable without guessing.
   each drawn in its own accent colour.
 - **Three difficulties**, which control both how many cells are given and how
   hard the reasoning is allowed to get.
-- **Hint and solve**, a three-mistake limit, a clock and a local leaderboard.
+- **Hint and solve**, a three-mistake limit and a clock.
 - **Generation happens on a background thread**, so the board appears
   immediately and fills in as soon as it is ready.
 
@@ -59,6 +66,16 @@ scripts/button_animations.gd     the staggered reveal patterns
 scenes/Game.tscn                 everything, in one scene
 Sprites/ Font/ Resource/         assets and themes
 ```
+
+## Status
+
+Playable and complete as a game: every board size, both region modes and all
+three difficulties work, and finished puzzles are always solvable.
+
+Not done yet, and visible in the menu as icons that do nothing — options,
+themes, statistics, the store and the information panel. Results are collected
+in memory but there is no screen that shows them, and nothing is persisted
+between runs.
 
 ## Related
 
