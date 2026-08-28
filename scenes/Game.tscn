@@ -54,6 +54,7 @@ script = ExtResource("1_s0nni")
 script = ExtResource("2_vjgi4")
 
 [node name="Game" type="Control" parent="." unique_id=2036197995]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -98,7 +99,7 @@ script = ExtResource("3_cpr0p")
 unique_name_in_owner = true
 autostart = true
 
-[node name="VBoxContainer2" type="VBoxContainer" parent="CanvasLayer/GameUI" unique_id=1848609969]
+[node name="VBoxContainer2" type="HBoxContainer" parent="CanvasLayer/GameUI" unique_id=297508842]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -106,43 +107,27 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TopPanel" type="Control" parent="CanvasLayer/GameUI/VBoxContainer2" unique_id=1335508454]
+[node name="LeftPanel" type="MarginContainer" parent="CanvasLayer/GameUI/VBoxContainer2" unique_id=1467081916]
 custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/TopPanel" unique_id=1292537570]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/TopPanel/VBoxContainer" unique_id=1780225470]
-layout_mode = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/TopPanel" unique_id=1884337762]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Control" type="Control" parent="CanvasLayer/GameUI/VBoxContainer2/TopPanel/HBoxContainer" unique_id=401789923]
-layout_mode = 2
 size_flags_horizontal = 3
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
 
-[node name="Back" type="Button" parent="CanvasLayer/GameUI/VBoxContainer2/TopPanel/HBoxContainer/Control" unique_id=1481122354]
+[node name="HBoxContainer" type="VBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel" unique_id=1194125119]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer" unique_id=1419389689]
+layout_mode = 2
+
+[node name="Back" type="Button" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/HBoxContainer" unique_id=1481122354]
 custom_minimum_size = Vector2(64, 64)
-layout_mode = 0
-offset_left = 24.0
-offset_top = 24.0
-offset_right = 88.0
-offset_bottom = 88.0
+layout_mode = 2
 theme = ExtResource("8_400sg")
 
-[node name="TextureRect" type="TextureRect" parent="CanvasLayer/GameUI/VBoxContainer2/TopPanel/HBoxContainer/Control/Back" unique_id=1432870119]
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/HBoxContainer/Back" unique_id=1432870119]
 material = SubResource("ShaderMaterial_2rd6h")
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 1
@@ -158,21 +143,12 @@ texture = ExtResource("8_y5y3l")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Control3" type="Control" parent="CanvasLayer/GameUI/VBoxContainer2/TopPanel/HBoxContainer" unique_id=1869698854]
-layout_mode = 2
-size_flags_horizontal = 8
-size_flags_vertical = 0
-
-[node name="Options" type="Button" parent="CanvasLayer/GameUI/VBoxContainer2/TopPanel/HBoxContainer/Control3" unique_id=280477057]
+[node name="Options" type="Button" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/HBoxContainer" unique_id=280477057]
 custom_minimum_size = Vector2(64, 64)
-layout_mode = 0
-offset_left = -88.0
-offset_top = 24.0
-offset_right = -24.0
-offset_bottom = 88.0
+layout_mode = 2
 theme = ExtResource("8_400sg")
 
-[node name="TextureRect" type="TextureRect" parent="CanvasLayer/GameUI/VBoxContainer2/TopPanel/HBoxContainer/Control3/Options" unique_id=1883387766]
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/HBoxContainer/Options" unique_id=1883387766]
 material = SubResource("ShaderMaterial_2rd6h")
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 1
@@ -188,17 +164,44 @@ texture = ExtResource("10_r7sob")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2" unique_id=722531193]
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer" unique_id=1149776092]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 16
-
-[node name="Control2" type="HBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/VBoxContainer" unique_id=1947091814]
-layout_mode = 2
-size_flags_horizontal = 3
 alignment = 1
 
-[node name="Mistakes" type="Label" parent="CanvasLayer/GameUI/VBoxContainer2/VBoxContainer/Control2" unique_id=1153051836]
+[node name="SelectGrid" type="GridContainer" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/VBoxContainer" unique_id=1962539606]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 0
+columns = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/VBoxContainer" unique_id=1463787145]
+layout_mode = 2
+alignment = 1
+
+[node name="Hint" type="Button" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/VBoxContainer/HBoxContainer" unique_id=1920890602]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+theme = ExtResource("8_400sg")
+theme_override_font_sizes/font_size = 24
+text = "Hint"
+
+[node name="Solve" type="Button" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/VBoxContainer/HBoxContainer" unique_id=1905693047]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+theme = ExtResource("8_400sg")
+theme_override_font_sizes/font_size = 24
+text = "Solve"
+
+[node name="Control2" type="VBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/VBoxContainer" unique_id=1230447804]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="Mistakes" type="Label" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/VBoxContainer/Control2" unique_id=1153051836]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -206,7 +209,7 @@ text = "Mistakes 0/3"
 label_settings = SubResource("LabelSettings_qy1jj")
 horizontal_alignment = 1
 
-[node name="TimerLabel" type="Label" parent="CanvasLayer/GameUI/VBoxContainer2/VBoxContainer/Control2" unique_id=1577245270]
+[node name="TimerLabel" type="Label" parent="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/VBoxContainer/Control2" unique_id=1577245270]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -214,58 +217,27 @@ text = "12:23"
 label_settings = SubResource("LabelSettings_qy1jj")
 horizontal_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/VBoxContainer" unique_id=782799533]
-layout_mode = 2
-size_flags_vertical = 3
-alignment = 1
-
-[node name="BoardFrame" type="AspectRatioContainer" parent="CanvasLayer/GameUI/VBoxContainer2/VBoxContainer/HBoxContainer" unique_id=1000000001]
+[node name="BoardPanel" type="MarginContainer" parent="CanvasLayer/GameUI/VBoxContainer2" unique_id=722531193]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+theme_override_constants/margin_left = 64
+theme_override_constants/margin_top = 64
+theme_override_constants/margin_right = 64
+theme_override_constants/margin_bottom = 64
 
-[node name="GridContainer" type="GridContainer" parent="CanvasLayer/GameUI/VBoxContainer2/VBoxContainer/HBoxContainer/BoardFrame" unique_id=870862669]
+[node name="BoardArea" type="CenterContainer" parent="CanvasLayer/GameUI/VBoxContainer2/BoardPanel" unique_id=1000000001]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="CanvasLayer/GameUI/VBoxContainer2/BoardPanel/BoardArea" unique_id=870862669]
 unique_name_in_owner = true
 layout_mode = 2
 columns = 9
 
-[node name="BottomPanel" type="Control" parent="CanvasLayer/GameUI/VBoxContainer2" unique_id=1452940880]
-custom_minimum_size = Vector2(0, 152)
-layout_mode = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/BottomPanel" unique_id=1149776092]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/BottomPanel/VBoxContainer" unique_id=1463787145]
-layout_mode = 2
-alignment = 1
-
-[node name="Hint" type="Button" parent="CanvasLayer/GameUI/VBoxContainer2/BottomPanel/VBoxContainer/HBoxContainer" unique_id=1920890602]
-custom_minimum_size = Vector2(96, 0)
-layout_mode = 2
-theme = ExtResource("8_400sg")
-theme_override_font_sizes/font_size = 24
-text = "Hint"
-
-[node name="Solve" type="Button" parent="CanvasLayer/GameUI/VBoxContainer2/BottomPanel/VBoxContainer/HBoxContainer" unique_id=1905693047]
-custom_minimum_size = Vector2(96, 0)
-layout_mode = 2
-theme = ExtResource("8_400sg")
-theme_override_font_sizes/font_size = 24
-text = "Solve"
-
-[node name="SelectGrid" type="HBoxContainer" parent="CanvasLayer/GameUI/VBoxContainer2/BottomPanel/VBoxContainer" unique_id=1962539606]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 0
-alignment = 1
-
 [node name="Menu" type="Control" parent="CanvasLayer" unique_id=817600815]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -276,6 +248,7 @@ mouse_filter = 2
 script = ExtResource("5_aug50")
 
 [node name="Control3" type="Control" parent="CanvasLayer/Menu" unique_id=651448422]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -285,22 +258,31 @@ grow_vertical = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="VBoxContainer" type="HBoxContainer" parent="CanvasLayer/Menu/Control3" unique_id=1134383163]
+[node name="VBoxContainer" type="HBoxContainer" parent="CanvasLayer/Menu" unique_id=870263454]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_top = 24.0
-offset_bottom = 88.0
+anchor_bottom = 1.0
 grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="CanvasLayer/Menu/VBoxContainer" unique_id=849515012]
+layout_mode = 2
+size_flags_horizontal = 3
 alignment = 1
 
-[node name="Options" type="Button" parent="CanvasLayer/Menu/Control3/VBoxContainer" unique_id=1193682928]
+[node name="VBoxContainer" type="HBoxContainer" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2" unique_id=1134383163]
+layout_mode = 2
+alignment = 1
+
+[node name="Options" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer" unique_id=1193682928]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 theme = SubResource("Theme_r7sob")
 
-[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/Control3/VBoxContainer/Options" unique_id=174789775]
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer/Options" unique_id=174789775]
 material = SubResource("ShaderMaterial_2rd6h")
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 1
@@ -320,14 +302,14 @@ texture = ExtResource("10_r7sob")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Zones" type="Button" parent="CanvasLayer/Menu/Control3/VBoxContainer" unique_id=1525374202]
+[node name="Zones" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer" unique_id=1525374202]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 4
 theme = ExtResource("8_400sg")
 toggle_mode = true
 
-[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/Control3/VBoxContainer/Zones" unique_id=92428167]
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer/Zones" unique_id=92428167]
 material = SubResource("ShaderMaterial_2rd6h")
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 1
@@ -347,14 +329,14 @@ texture = ExtResource("11_y5y3l")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Configuration" type="Button" parent="CanvasLayer/Menu/Control3/VBoxContainer" unique_id=727847939]
+[node name="Configuration" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer" unique_id=727847939]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_vertical = 5
 theme = SubResource("Theme_r7sob")
 
-[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/Control3/VBoxContainer/Configuration" unique_id=887935571]
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer/Configuration" unique_id=887935571]
 material = SubResource("ShaderMaterial_2rd6h")
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 1
@@ -374,14 +356,14 @@ texture = ExtResource("12_y5y3l")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Store" type="Button" parent="CanvasLayer/Menu/Control3/VBoxContainer" unique_id=1251663932]
+[node name="Store" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer" unique_id=1251663932]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_vertical = 5
 theme = SubResource("Theme_r7sob")
 
-[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/Control3/VBoxContainer/Store" unique_id=1719930369]
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer/Store" unique_id=1719930369]
 material = SubResource("ShaderMaterial_2rd6h")
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 1
@@ -401,14 +383,14 @@ texture = ExtResource("11_mcffj")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Leaderboard" type="Button" parent="CanvasLayer/Menu/Control3/VBoxContainer" unique_id=297330990]
+[node name="Leaderboard" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer" unique_id=297330990]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_vertical = 5
 theme = SubResource("Theme_r7sob")
 
-[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/Control3/VBoxContainer/Leaderboard" unique_id=1532141310]
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer/Leaderboard" unique_id=1532141310]
 material = SubResource("ShaderMaterial_2rd6h")
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 1
@@ -428,14 +410,14 @@ texture = ExtResource("14_vjgi4")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Information" type="Button" parent="CanvasLayer/Menu/Control3/VBoxContainer" unique_id=2021109439]
+[node name="Information" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer" unique_id=2021109439]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_vertical = 5
 theme = SubResource("Theme_r7sob")
 
-[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/Control3/VBoxContainer/Information" unique_id=243786933]
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer/Information" unique_id=243786933]
 material = SubResource("ShaderMaterial_2rd6h")
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 1
@@ -455,37 +437,29 @@ texture = ExtResource("15_kyk2p")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Menu" unique_id=913662310]
-custom_minimum_size = Vector2(512, 768)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -256.0
-offset_top = -384.0
-offset_right = 256.0
-offset_bottom = 384.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 32
-
-[node name="Icon" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer" unique_id=664547616]
+[node name="Icon" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer2" unique_id=664547616]
 unique_name_in_owner = true
 material = SubResource("ShaderMaterial_2rd6h")
 custom_minimum_size = Vector2(384, 384)
 layout_mode = 2
+size_flags_horizontal = 3
 mouse_filter = 2
 texture = ExtResource("11_r7sob")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Menu/VBoxContainer" unique_id=200115825]
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Menu/VBoxContainer" unique_id=715803857]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer" unique_id=200115825]
 layout_mode = 2
 alignment = 1
 
-[node name="PrevSize" type="Button" parent="CanvasLayer/Menu/VBoxContainer/HBoxContainer" unique_id=2036948801]
+[node name="PrevSize" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer2" unique_id=2036948801]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
@@ -493,7 +467,7 @@ theme = ExtResource("8_400sg")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_sv1m6")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_a8wo8")
 
-[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer/HBoxContainer/PrevSize" unique_id=42015480]
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer2/PrevSize" unique_id=42015480]
 material = SubResource("ShaderMaterial_2rd6h")
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 1
@@ -513,7 +487,7 @@ texture = ExtResource("18_sv1m6")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Size" type="Label" parent="CanvasLayer/Menu/VBoxContainer/HBoxContainer" unique_id=1386086337]
+[node name="Size" type="Label" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer2" unique_id=1386086337]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -522,7 +496,7 @@ theme_override_font_sizes/font_size = 24
 text = "Sudoku"
 horizontal_alignment = 1
 
-[node name="NextSize" type="Button" parent="CanvasLayer/Menu/VBoxContainer/HBoxContainer" unique_id=1375167801]
+[node name="NextSize" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer2" unique_id=1375167801]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
@@ -530,7 +504,7 @@ theme = ExtResource("8_400sg")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_sv1m6")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_a8wo8")
 
-[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer/HBoxContainer/NextSize" unique_id=151282582]
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer2/NextSize" unique_id=151282582]
 material = SubResource("ShaderMaterial_2rd6h")
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 1
@@ -549,11 +523,6 @@ mouse_filter = 2
 texture = ExtResource("19_a8wo8")
 expand_mode = 1
 stretch_mode = 5
-
-[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Menu/VBoxContainer" unique_id=715803857]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 16
 
 [node name="Easy" type="Button" parent="CanvasLayer/Menu/VBoxContainer/VBoxContainer" unique_id=627244302]
 unique_name_in_owner = true
@@ -614,6 +583,7 @@ toggle_mode = true
 text = "4x4"
 
 [node name="Control" type="Control" parent="CanvasLayer/Menu" unique_id=114832336]
+visible = false
 custom_minimum_size = Vector2(512, 99)
 layout_mode = 1
 anchors_preset = 7
@@ -842,14 +812,14 @@ theme = ExtResource("8_400sg")
 text = "Share"
 
 [connection signal="timeout" from="CanvasLayer/GameUI/Timer" to="CanvasLayer/GameUI" method="_on_timer_timeout"]
-[connection signal="pressed" from="CanvasLayer/GameUI/VBoxContainer2/TopPanel/HBoxContainer/Control/Back" to="CanvasLayer/GameUI" method="_on_back_pressed"]
-[connection signal="pressed" from="CanvasLayer/GameUI/VBoxContainer2/TopPanel/HBoxContainer/Control3/Options" to="CanvasLayer/GameUI" method="_on_options_pressed"]
-[connection signal="pressed" from="CanvasLayer/GameUI/VBoxContainer2/BottomPanel/VBoxContainer/HBoxContainer/Hint" to="CanvasLayer/GameUI" method="_on_hint_pressed"]
-[connection signal="pressed" from="CanvasLayer/GameUI/VBoxContainer2/BottomPanel/VBoxContainer/HBoxContainer/Solve" to="CanvasLayer/GameUI" method="_on_solve_pressed"]
-[connection signal="pressed" from="CanvasLayer/Menu/Control3/VBoxContainer/Options" to="CanvasLayer/Menu" method="_on_options_pressed"]
-[connection signal="pressed" from="CanvasLayer/Menu/Control3/VBoxContainer/Zones" to="CanvasLayer/Menu" method="_on_zones_pressed"]
-[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/HBoxContainer/PrevSize" to="CanvasLayer/Menu" method="_on_prev_size_pressed"]
-[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/HBoxContainer/NextSize" to="CanvasLayer/Menu" method="_on_next_size_pressed"]
+[connection signal="pressed" from="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/HBoxContainer/Back" to="CanvasLayer/GameUI" method="_on_back_pressed"]
+[connection signal="pressed" from="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/HBoxContainer/Options" to="CanvasLayer/GameUI" method="_on_options_pressed"]
+[connection signal="pressed" from="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/VBoxContainer/HBoxContainer/Hint" to="CanvasLayer/GameUI" method="_on_hint_pressed"]
+[connection signal="pressed" from="CanvasLayer/GameUI/VBoxContainer2/LeftPanel/HBoxContainer/VBoxContainer/HBoxContainer/Solve" to="CanvasLayer/GameUI" method="_on_solve_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer/Options" to="CanvasLayer/Menu" method="_on_options_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer2/VBoxContainer/Zones" to="CanvasLayer/Menu" method="_on_zones_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer2/PrevSize" to="CanvasLayer/Menu" method="_on_prev_size_pressed"]
+[connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/HBoxContainer2/NextSize" to="CanvasLayer/Menu" method="_on_next_size_pressed"]
 [connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/Easy" to="CanvasLayer/Menu" method="_on_easy_pressed"]
 [connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/Medium" to="CanvasLayer/Menu" method="_on_medium_pressed"]
 [connection signal="pressed" from="CanvasLayer/Menu/VBoxContainer/VBoxContainer/Hard" to="CanvasLayer/Menu" method="_on_hard_pressed"]

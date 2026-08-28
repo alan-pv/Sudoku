@@ -7,17 +7,27 @@ class_name Sudoku
 signal ButtonSelected(btn: GridButton)
 signal NumberSolved(value: int)
 signal GenerationCompleted(board_dict: Dictionary)
+signal NumbersChanged
 
 @onready var game_ui = %GameUI
 @onready var grid_container = %GridContainer
+@onready var board_area = %BoardArea
 @onready var button_animations = %ButtonAnimations
 @onready var grid_button_scene = preload("res://scenes/button.tscn")
+
+## The board lives in the right-hand panel of the HUD. Keep these in sync with
+## BoardPanel in Game.tscn: they are only used as a fallback while the panel has
+## not been laid out yet.
+const BOARD_PANEL_RATIO := 2.0 / 3.0
+const BOARD_MARGIN := 64.0
+const BOX_SEPARATION := 4.0
 
 # Grid data structure
 var grid: Dictionary = {} 
 var grid_containers: Array = []
 var selected_button: GridButton = null
 var box_size: int = -1
+var cell_size: float = 0.0
 var solved: Dictionary = {}
 var total: int = 0
 
@@ -47,6 +57,7 @@ func _reset() -> void:
 func init_game(overwrite: bool = true):
 	_reset()
 	box_size = int(sqrt(Settings.GRID_SIZE))
+	cell_size = _compute_cell_size()
 	set_grid_container()
 	
 	_create_grid_containers()
@@ -104,6 +115,7 @@ func _create_grid_buttons_empty() -> void:
 			grid_button.set_data({}, pos)
 			
 			container.add_child(grid_button.get_parent())
+			grid_button.apply_cell_size(cell_size)
 			grid_button.hide()
 			all_buttons.append(grid_button)
 	
@@ -175,6 +187,8 @@ func _update_grid_with_real_data() -> void:
 				grid_button.c_answer = 0
 				grid_button.solved = false
 				grid_button._set_text(0)
+	
+	NumbersChanged.emit()
 
 ## Plays the reveal once every cell is ready.
 func _reveal_numbers_animation() -> void:
@@ -187,9 +201,40 @@ func get_data(pos: Vector2i) -> Dictionary:
 
 func set_grid_container() -> void:
 	grid_container.columns = box_size
-	var separation = 8 if not Settings.ZONES else 4
+	var separation = _box_gap()
 	grid_container.add_theme_constant_override("h_separation", separation)
 	grid_container.add_theme_constant_override("v_separation", separation)
+
+## Gap between the boxes of the board. Jigsaw boards use a tighter one, since
+## the borders already tell the regions apart.
+func _box_gap() -> int:
+	return 8 if not Settings.ZONES else 4
+
+## The cell size that makes the whole board fit inside the board panel, whatever
+## the board size is, so it never runs from edge to edge of the screen.
+func _compute_cell_size() -> float:
+	var area: Vector2 = board_area.size if board_area else Vector2.ZERO
+	if area.x <= 1.0 or area.y <= 1.0:
+		# The HUD is still hidden, so the panel has no size yet.
+		var viewport := get_viewport_rect().size
+		area = Vector2(viewport.x * BOARD_PANEL_RATIO, viewport.y) - Vector2.ONE * (BOARD_MARGIN * 2.0)
+	
+	var gaps: float = _box_gap() * (box_size - 1) + BOX_SEPARATION * box_size * (box_size - 1)
+	return maxf(floorf((minf(area.x, area.y) - gaps) / Settings.GRID_SIZE), 12.0)
+
+## How many cells of each value the board is still missing. Only a cell holding
+## its correct value counts as placed, so a wrong guess never makes a number
+## disappear from the pad.
+func get_remaining_counts() -> Dictionary:
+	var counts: Dictionary = {}
+	for n in range(1, Settings.GRID_SIZE + 1):
+		counts[n] = Settings.GRID_SIZE
+	for key in grid:
+		var cell: Dictionary = grid[key]
+		var solution: int = cell.get("solution", 0)
+		if solution > 0 and cell.get("value", 0) == solution:
+			counts[solution] -= 1
+	return counts
 
 func _create_grid_containers():
 	grid_containers.clear()
@@ -197,6 +242,8 @@ func _create_grid_containers():
 		for c in range(box_size):
 			var n_grid = GridContainer.new()
 			n_grid.columns = box_size
+			n_grid.add_theme_constant_override("h_separation", int(BOX_SEPARATION))
+			n_grid.add_theme_constant_override("v_separation", int(BOX_SEPARATION))
 			grid_container.add_child(n_grid)
 			grid_containers.append(n_grid)
 
@@ -231,6 +278,7 @@ func _update_data(pos: Vector2i, number: int) -> void:
 		_number_solved(number)
 	grid[pos]["value"] = number
 	ButtonSelected.emit(grid_selected_button)
+	NumbersChanged.emit()
 
 ## Fills one random empty cell with its correct value.
 func _show_hint() -> void:

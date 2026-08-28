@@ -22,12 +22,13 @@ var pos: Vector2i = Vector2i.ZERO
 var zone: int = -1
 var current_state: CellStates = CellStates.NORMAL
 
-func _ready():
-	var custom_size = Vector2.ONE * ((720-48) / Settings.GRID_SIZE)
-	control.custom_minimum_size = custom_size
-	label.label_settings.font_size = custom_size.x / 2
-	
-	
+## Sizes the cell and its number. Sudoku works the value out from the space the
+## board panel actually has, so the same cell scene fits a 4x4 and a 16x16.
+func apply_cell_size(cell_size: float) -> void:
+	control.custom_minimum_size = Vector2.ONE * cell_size
+	label.label_settings.font_size = int(cell_size / 2)
+
+
 func set_data(data: Dictionary, new_pos: Vector2i) -> void:
 	pos = new_pos
 	

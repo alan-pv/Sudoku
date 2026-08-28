@@ -9,12 +9,18 @@ class_name GameUI
 @onready var select_grid = %SelectGrid
 @onready var timer: Timer = %Timer
 
-## Number pad buttons are square. The size is picked so that a full row still
-## fits comfortably on screen at any board size, rather than being tied to a
-## particular window width.
-const PAD_ROW_WIDTH := 560.0
+## The number pad is laid out as a grid, one box wide (3 columns for a 9x9), and
+## lives in the left third of the screen. Buttons are square and sized so a full
+## row fits in that third, whatever the board size is.
+const PAD_THEME := preload("res://Resource/Button.tres")
+const PAD_PANEL_RATIO := 1.0 / 3.0
+const PAD_PADDING := 48.0
+const PAD_SEPARATION := 8
 const PAD_MIN_SIZE := 40.0
-const PAD_MAX_SIZE := 72.0
+const PAD_MAX_SIZE := 96.0
+
+## Pad buttons by the number they stand for, so finished numbers can be hidden.
+var number_buttons: Dictionary = {}
 
 var time: int = 0:
 	set(value):
@@ -32,10 +38,13 @@ var mistakes: int = 0:
 func _ready():
 	Settings.connect("GameStart", _start_game)
 	Settings.connect("GameOver", _end_game)
+	sudoku.NumbersChanged.connect(_refresh_select_grid)
 
 func _start_game() -> void:
-	for button in select_grid.get_children():
-		button.queue_free()
+	number_buttons.clear()
+	for slot in select_grid.get_children():
+		select_grid.remove_child(slot)
+		slot.queue_free()
 	bind_select_grid_button_actions()
 	_reset_game_stats()
 	timer.start()
@@ -53,17 +62,45 @@ func _end_game(state: String) -> void:
 	_update_ui()
 
 func bind_select_grid_button_actions():
+	var columns: int = int(sqrt(float(Settings.GRID_SIZE)))
+	select_grid.columns = columns
+	select_grid.add_theme_constant_override("h_separation", PAD_SEPARATION)
+	select_grid.add_theme_constant_override("v_separation", PAD_SEPARATION)
+	
+	var panel_width: float = get_viewport_rect().size.x * PAD_PANEL_RATIO - PAD_PADDING
 	var button_size: float = clampf(
-		PAD_ROW_WIDTH / Settings.GRID_SIZE, PAD_MIN_SIZE, PAD_MAX_SIZE
+		(panel_width - PAD_SEPARATION * (columns - 1)) / columns, PAD_MIN_SIZE, PAD_MAX_SIZE
 	)
+	
 	for i in range(Settings.GRID_SIZE):
+		var number: int = i + 1
+		
+		# Each button gets its own slot: hiding a finished number then leaves an
+		# empty gap instead of shuffling the rest of the pad around.
+		var slot = Control.new()
+		slot.custom_minimum_size = Vector2.ONE * button_size
+		select_grid.add_child(slot)
+		
 		var n_button = Button.new()
-		select_grid.add_child(n_button)
-		n_button.theme = preload("res://Resource/Button.tres")
-		n_button.custom_minimum_size = Vector2.ONE * button_size
-		n_button.text = str(i + 1)
-		n_button.name = str(i + 1)
-		n_button.connect("pressed", sudoku._on_select_grid_button_pressed.bind(int(n_button.text)))
+		n_button.theme = PAD_THEME
+		n_button.text = str(number)
+		n_button.name = str(number)
+		n_button.add_theme_font_size_override("font_size", int(button_size / 2))
+		slot.add_child(n_button)
+		n_button.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		n_button.connect("pressed", sudoku._on_select_grid_button_pressed.bind(number))
+		number_buttons[number] = n_button
+	
+	_refresh_select_grid()
+
+## Drops the buttons for numbers that are already fully placed on the board:
+## there is nothing left to put down with them.
+func _refresh_select_grid() -> void:
+	if number_buttons.is_empty():
+		return
+	var remaining: Dictionary = sudoku.get_remaining_counts()
+	for number in number_buttons:
+		number_buttons[number].visible = remaining.get(number, 0) > 0
 
 func _update_ui() -> void:
 	var seconds = time % 60
