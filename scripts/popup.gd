@@ -1,12 +1,14 @@
 extends Control
 class_name UIPopup
 
+## The pause, win and lose panels that sit on top of the board.
+
 @onready var lose: Panel = %Lose
 @onready var win: Panel = %Win
 @onready var pause: Panel = %Pause
 
-@onready var dificultad: Label = %Dificultad
-@onready var tiempo: Label = %Tiempo
+@onready var difficulty_label: Label = %Difficulty
+@onready var time_label: Label = %TimeValue
 @onready var sudoku: Sudoku = %Sudoku
 
 
@@ -28,10 +30,10 @@ func get_lose_screen() -> void:
 func get_win_screen(time: String) -> void:
 	get_pause_panel()
 	win.show()
-	dificultad.text = get_dificultad()
-	tiempo.text = time
+	difficulty_label.text = get_difficulty_name()
+	time_label.text = time
 
-func get_dificultad() -> String:
+func get_difficulty_name() -> String:
 	match Settings.DIFFICULTY:
 		SudokuBoard.TypeDifficulty.EASY:
 			return "Easy"

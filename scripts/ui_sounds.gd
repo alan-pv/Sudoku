@@ -13,14 +13,14 @@ class_name UISounds
 	&"UI_Click": AudioStreamPlayer.new()
 }
 
-#@export var songs: Array[AudioFile]  # Cambiado a array para múltiples canciones
+#@export var songs: Array[AudioFile]  # An array, so several tracks can queue
 #var current_music_player: SAudioStreamPlayer = null
 var current_song_index: int = 0
 
 func _ready() -> void:
 	assert(root_path != null, "Empty root path for Interface Sounds!")
 	
-	# Configurar audios
+	# Wire the sounds up to every button under the root.
 	#for sound in sounds:
 		#sounds[sound].stream = load("res://Audio/" + str(sound) + ".wav")
 		#sounds[sound].bus = &"Sfx"
@@ -67,11 +67,11 @@ func animate_hover(node: Control) -> void:
 	
 	var _sign = randf_range(1, -1)
 	
-	# Animación de rotación elástica
+	# Elastic wobble.
 	tween.tween_property(node, "rotation_degrees", 7.5 * _sign , 0.1)
 	tween.tween_property(node, "rotation_degrees", 0.0, 0.7)
 	
-	# Opcional: Agregar escala para mayor efecto
+	# A small squash on top of it.
 	var scale_tween = node.create_tween()
 	scale_tween.tween_property(node, "scale", Vector2(0.8, 0.8), 0.1)
 	scale_tween.tween_property(node, "scale", Vector2(1.0, 1.0), 0.1)
@@ -82,13 +82,13 @@ func animate_hover(node: Control) -> void:
 		#current_music_player = Audio.play_audio(next_song)
 		#
 		#if current_music_player:
-			## Conectar la señal de finalización
+			## Hook the finished signal.
 			#if current_music_player.is_connected("finished", _on_song_finished):
 				#current_music_player.disconnect("finished", _on_song_finished)
 			#current_music_player.connect("finished", _on_song_finished)
 		#current_song_index += 1
 	#else:
-		## Reiniciar o manejar fin de lista
+		## Wrap around at the end of the list.
 		#current_song_index = 0
 		#play_next_song()
 

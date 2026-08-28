@@ -1,9 +1,12 @@
 extends Control
 class_name Sudoku
 
+## The board on screen: builds the grid of buttons, generates the puzzle on a
+## background thread and keeps the cell data in sync with what is displayed.
+
 signal ButtonSelected(btn: GridButton)
 signal NumberSolved(value: int)
-signal GenerationCompleted(board_dict: Dictionary)  # Nueva señal
+signal GenerationCompleted(board_dict: Dictionary)
 
 @onready var game_ui = %GameUI
 @onready var grid_container = %GridContainer
@@ -18,7 +21,7 @@ var box_size: int = -1
 var solved: Dictionary = {}
 var total: int = 0
 
-# Variables para generación en paralelo
+# Background generation
 var generation_thread: Thread
 var is_generating: bool = false
 var board_dict: Dictionary = {}
@@ -36,7 +39,7 @@ func _reset() -> void:
 	total = 0
 	all_buttons = []
 	
-	# Limpiar hilo si existe
+	# Join the worker thread if one is still running.
 	if generation_thread and generation_thread.is_alive():
 		generation_thread.wait_to_finish()
 		generation_thread = null
@@ -48,13 +51,13 @@ func init_game(overwrite: bool = true):
 	
 	_create_grid_containers()
 	
-	# INICIAR GENERACIÓN EN PARALELO
+	# Kick off generation before touching the UI...
 	_start_parallel_generation(overwrite)
 	
-	# CREAR BOTONES INMEDIATAMENTE (no esperar a la generación)
+	# ...so the empty board can appear straight away instead of waiting.
 	_create_grid_buttons_empty()
 
-## Iniciar generación en un hilo separado
+## Starts generation on its own thread.
 func _start_parallel_generation(overwrite: bool) -> void:
 	is_generating = true
 	generation_thread = Thread.new()
@@ -62,32 +65,31 @@ func _start_parallel_generation(overwrite: bool) -> void:
 	if not GenerationCompleted.is_connected(_on_generation_completed):
 		GenerationCompleted.connect(_on_generation_completed)
 
-## Función que se ejecuta en el hilo
+## Runs on the worker thread.
 func _generate_board_in_thread(overwrite: bool) -> void:
-	# Generar el tablero en el hilo (esto ya no bloquea la UI)
+	# Generating here keeps the UI responsive.
 	var generated_board = SudokuBoard.generate_board(Settings.GRID_SIZE, Settings.DIFFICULTY, Settings.ZONES) if overwrite else Settings.saved_game
-	print(generated_board)
 	
-	# Notificar al hilo principal que la generación terminó
+	# Hand the result back to the main thread.
 	call_deferred("emit_signal", "GenerationCompleted", generated_board)
 
-## Cuando la generación termina
+## Called on the main thread once generation finishes.
 func _on_generation_completed(generated_board: Dictionary) -> void:
 	board_dict = generated_board
 	is_generating = false
 	
-	# Esperar a que el hilo termine
+	# Join the thread before dropping the reference.
 	if generation_thread and generation_thread.is_alive():
 		generation_thread.wait_to_finish()
 		generation_thread = null
 	
-	# Si los botones ya están creados, actualizar con la información real
+	# If the buttons already exist, fill them with the real board.
 	if not grid.is_empty():
 		_update_grid_with_real_data()
 
-## Crear botones vacíos inmediatamente (sin esperar la generación)
+## Creates the buttons up front, before there is a puzzle to put in them.
 func _create_grid_buttons_empty() -> void:
-	# Crear botones con datos temporales/vacíos
+	# Placeholder data until the real board arrives.
 	for row in range(Settings.GRID_SIZE):
 		for col in range(Settings.GRID_SIZE):
 			var box_row = int(row / box_size)
@@ -97,39 +99,39 @@ func _create_grid_buttons_empty() -> void:
 			var grid_button = _create_grid_button()
 			var pos = Vector2i(col, row)
 			
-			# Inicializar con diccionario vacío
+			# Start empty; _update_grid_with_real_data fills these in.
 			grid[pos] = {"button": grid_button}
-			grid_button.set_data({}, pos)  # Pasar diccionario vacío
+			grid_button.set_data({}, pos)
 			
 			container.add_child(grid_button.get_parent())
 			grid_button.hide()
 			all_buttons.append(grid_button)
 	
-	# Animación de aparición de botones vacíos
+	# Reveal the empty cells with a random entrance animation.
 	animation_type = randi() % 7
 	button_animations.set_grid_size(Settings.GRID_SIZE)
 	button_animations.animate_buttons(all_buttons, animation_type, true, false)
 	
-	# Si la generación ya terminó, proceder inmediatamente
+	# Generation may already be done for a very small board.
 	if not is_generating and not board_dict.is_empty():
 		_update_grid_with_real_data()
 		_reveal_numbers_animation()
 	else:
-		# Mostrar indicador de carga y esperar
+		# Otherwise wait for it.
 		_show_loading_indicator()
 
-## Mostrar indicador de carga mientras se genera
+## Waits for generation to finish, then reveals the numbers.
 func _show_loading_indicator() -> void:
 	
-	# Esperar hasta que la generación termine
+	# Poll rather than await the signal: it may already have fired.
 	while is_generating:
 		await get_tree().create_timer(0.01).timeout
 	
-	# Cuando termine, actualizar y revelar números
+	# Now the real values can go in.
 	_update_grid_with_real_data()
 	_reveal_numbers_animation()
 
-## Crear botón (sin datos reales aún)
+## Builds one cell button and wires its signals.
 func _create_grid_button() -> GridButton:
 	var grid_button: GridButton = grid_button_scene.instantiate().get_node("GridButton")
 	
@@ -138,15 +140,15 @@ func _create_grid_button() -> GridButton:
 	grid_button.Solved.connect(_number_solved)
 	connect("ButtonSelected", grid_button.update_state)
 	
-	# Actualizar selected_button
+	# The first button created becomes the initial selection.
 	if not selected_button:
 		selected_button = grid_button
 	
 	return grid_button
 
-## Actualizar la grid con los datos reales del sudoku generado
+## Copies the generated board into the cells, without revealing anything yet.
 func _update_grid_with_real_data() -> void:
-	# Establecer los datos reales del tablero generado SIN revelar números
+	# Values are stored now and shown later, so the reveal animation can play.
 	for row in range(Settings.GRID_SIZE):
 		for col in range(Settings.GRID_SIZE):
 			var key = Vector2i(col, row)
@@ -159,13 +161,13 @@ func _update_grid_with_real_data() -> void:
 				"button": grid[key]["button"]
 			}
 			
-			# IMPORTANTE: Solo configurar datos, NO revelar números todavía
+			# Data only. Showing the number here would spoil the animation.
 			var grid_button = grid[key]["button"]
 			grid_button.pos = key
 			grid_button.zone = entry["zone"]
 			grid_button.answer = int(entry["solution"])
 			
-			# Configurar estado de resuelto pero NO mostrar el número
+			# Mark givens as solved, still without displaying them.
 			if entry["value"] == entry["solution"]:
 				grid_button.c_answer = -1
 				grid_button.solved = true
@@ -174,7 +176,7 @@ func _update_grid_with_real_data() -> void:
 				grid_button.solved = false
 				grid_button._set_text(0)
 
-## Revelar números después de que todo esté listo
+## Plays the reveal once every cell is ready.
 func _reveal_numbers_animation() -> void:
 	button_animations.set_animation_speed(0.075, 0.125)
 	button_animations.animate_buttons(all_buttons, animation_type, false, true)
@@ -208,13 +210,13 @@ func _on_select_grid_button_pressed(number_pressed):
 	var pos = selected_button.pos
 	var cell_data = grid[pos]
 	
+	# A cell that already holds its correct value cannot be overwritten.
 	if cell_data["value"] == cell_data["solution"]:
-		print("No se puede colocar en una celda ya solucionada.")
 		return
 		
 	_update_data(pos, number_pressed)
 	if cell_data["solution"] != number_pressed:
-		game_ui.errores += 1
+		game_ui.mistakes += 1
 
 func _number_solved(n: int) -> void:
 	if not solved.has(n): solved[n] = 0 
@@ -230,7 +232,7 @@ func _update_data(pos: Vector2i, number: int) -> void:
 	grid[pos]["value"] = number
 	ButtonSelected.emit(grid_selected_button)
 
-# Mostrar una pista rellenando una celda vacía con su valor correcto
+## Fills one random empty cell with its correct value.
 func _show_hint() -> void:
 	var options := []
 	for key in grid:
@@ -241,13 +243,13 @@ func _show_hint() -> void:
 	var hint = options.pick_random()
 	_update_data(hint, grid[hint]["solution"])
 
-# Resuelve el tablero poniendo todas las respuestas
+## Fills in every remaining cell.
 func _solve() -> void:
 	for key in grid:
 		if grid[key]["value"] == 0:
 			_update_data(key, grid[key]["solution"])
 
-# Funciones utilitarias
+# Helpers used to validate a placement
 func get_column(col: int) -> Array:
 	var col_list = []
 	for row in range(Settings.GRID_SIZE):
@@ -277,6 +279,6 @@ func _get_row_values(row: int) -> Array:
 	return row_list
 
 func _exit_tree() -> void:
-	# Asegurarse de limpiar el hilo al salir
+	# Never leave the worker thread running past this node.
 	if generation_thread and generation_thread.is_alive():
 		generation_thread.wait_to_finish()

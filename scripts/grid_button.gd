@@ -74,7 +74,7 @@ func set_state(state: CellStates):
 	elif not solved and c_answer != -1:
 		label.self_modulate = Color.INDIAN_RED
 	if zone != -1:
-		get_theme_stylebox("normal").border_color = Settings.colores_acentos[zone] if Settings.ZONES else Color("000000")
+		get_theme_stylebox("normal").border_color = Settings.accent_colors[zone] if Settings.ZONES else Color("000000")
 		get_theme_stylebox("normal").bg_color = cell_states[state]
 	else:
 		get_theme_stylebox("normal").border_color = Color("000000")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://b4dd52j6kdw0e"]
+[gd_scene format=3 uid="uid://b4dd52j6kdw0e"]
 
 [ext_resource type="Script" uid="uid://bnanodrjocohb" path="res://scripts/grid_button.gd" id="1_mi6dp"]
 [ext_resource type="FontFile" uid="uid://ny1uo4wyolu3" path="res://Font/Inter_18pt-Regular.ttf" id="2_rhj8v"]
@@ -35,7 +35,7 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[node name="Control" type="Control"]
+[node name="Control" type="Control" unique_id=1038773024]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -43,7 +43,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="GridButton" type="Button" parent="."]
+[node name="GridButton" type="Button" parent="." unique_id=638276775]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -57,7 +57,7 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_mi6dp")
 theme_override_styles/focus = SubResource("StyleBoxFlat_mi6dp")
 script = ExtResource("1_mi6dp")
 
-[node name="Label" type="Label" parent="GridButton"]
+[node name="Label" type="Label" parent="GridButton" unique_id=639640263]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -69,7 +69,7 @@ label_settings = SubResource("LabelSettings_3q610")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Panel" type="Panel" parent="GridButton"]
+[node name="Panel" type="Panel" parent="GridButton" unique_id=2057786135]
 unique_name_in_owner = true
 visible = false
 show_behind_parent = true

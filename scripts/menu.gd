@@ -1,5 +1,7 @@
 extends Control
 
+## The main menu: board size, region mode and difficulty.
+
 @onready var prev_size = %PrevSize
 @onready var size_grid = %Size
 @onready var next_size = %NextSize
@@ -62,7 +64,7 @@ func _on_continue_pressed():
 		sudoku.init_game(false)
 
 func update_index(n: int) -> void:
-	var dificultad: String = ""
+	var mode_name: String = ""
 	var sprite: Texture = null
 	index = n
 	prev_size.get_child(0).show()
@@ -70,26 +72,26 @@ func update_index(n: int) -> void:
 	match index:
 		1: 
 			sprite = normal_sprite
-			dificultad = "Normal"
+			mode_name = "Normal"
 			prev_size.get_child(0).hide()
 			Settings.ZONES = false
 		2: 
 			sprite = jigsaw_sprite
-			dificultad = "Jigsaw"
+			mode_name = "Jigsaw"
 			next_size.get_child(0).hide()
 			Settings.ZONES = true
 	
-	size_grid.text = str(dificultad)
+	size_grid.text = mode_name
 	icon.texture = sprite
 
 
 func _on_size_button_pressed(selected_button):
-	# Deseleccionar todos los demás
+	# Untoggle every other button; these act as a radio group.
 	for button in size_buttons:
 		if button != selected_button:
 			button.set_pressed(false)
 	
-	# Actualizar configuración según el botón presionado
+	# Apply the board size the pressed button stands for.
 	if selected_button == two:
 		Settings.GRID_SIZE = 4
 	elif selected_button == three:
@@ -104,7 +106,7 @@ func _on_zones_pressed(): Settings.ZONES = !Settings.ZONES
 func _on_options_pressed():
 	pass # Replace with function body.
 
-func _on_eliminar_anuncios_pressed():
+func _on_remove_ads_pressed():
 	pass # Replace with function body.
 
 func _on_configuration_pressed():
