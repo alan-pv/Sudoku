@@ -68,13 +68,26 @@ func init_game(overwrite: bool = true):
 	# ...so the empty board can appear straight away instead of waiting.
 	_create_grid_buttons_empty()
 
-## Starts generation on its own thread.
+## Starts generation on its own thread, or inline where threads are unavailable.
+##
+## The web export ships without thread support on purpose: enabling it would force
+## the page to be served with COOP/COEP headers, which breaks the site embedding the
+## game. Without threads `Thread.start()` never runs, so the board stayed empty.
+## Generating deferred instead costs one blocked frame and works everywhere.
 func _start_parallel_generation(overwrite: bool) -> void:
 	is_generating = true
-	generation_thread = Thread.new()
-	generation_thread.start(_generate_board_in_thread.bind(overwrite))
+
+	# Connect before starting, so a fast generation can't fire before we listen.
 	if not GenerationCompleted.is_connected(_on_generation_completed):
 		GenerationCompleted.connect(_on_generation_completed)
+
+	if not OS.has_feature("threads"):
+		# Deferred so the empty board still gets drawn first.
+		call_deferred("_generate_board_in_thread", overwrite)
+		return
+
+	generation_thread = Thread.new()
+	generation_thread.start(_generate_board_in_thread.bind(overwrite))
 
 ## Runs on the worker thread.
 func _generate_board_in_thread(overwrite: bool) -> void:
